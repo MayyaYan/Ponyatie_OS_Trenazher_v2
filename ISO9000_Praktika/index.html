@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ОП.09. Показатели качества и ISO 9000 — практическая работа</title>
+<style>
+/* ===== Практикум «Отдел качества»: сцена 1280×720, кегль в пунктах (не меньше 22 pt) ===== */
+:root{
+  --navy:#0B2545; --navy2:#13315C; --ink:#14213D; --muted:#4A5568; --line:#CBD5E1; --bg:#EEF2F7; --card:#FFFFFF;
+  --acc:#E07A1F; --acc-soft:#FDEBD8; --blue:#1D4ED8; --blue-soft:#DBEAFE;
+  --ok:#15803D; --ok-soft:#DCFCE7; --bad:#B91C1C; --bad-soft:#FEE2E2; --warn:#A16207; --warn-soft:#FEF9C3;
+  --ff:"Segoe UI","PT Sans",Arial,sans-serif; --mono:Consolas,"PT Mono","Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0B1220}
+body{font-family:var(--ff);color:var(--ink);-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}button:disabled{cursor:default}
+:focus-visible{outline:4px solid var(--acc);outline-offset:2px}
+.hidden{display:none!important}
+#stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;overflow:hidden;background:var(--bg);font-size:24pt;line-height:1.22}
+
+/* шапка */
+#top{position:absolute;left:0;right:0;top:0;height:58px;background:var(--navy);color:#fff;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:22pt}
+#top .logo{height:46px;padding:0 10px;border-radius:10px;background:var(--acc);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22pt;letter-spacing:-1px;flex:none}
+#top .ttl{font-weight:700;white-space:nowrap}
+#top .sp{flex:1}
+#top .who{color:#BFD3F2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:330px}
+#top .pill{padding:2px 14px;border-radius:10px;background:rgba(255,255,255,.12);font-weight:700;white-space:nowrap}
+#top .clock{font-family:var(--mono);background:#1E3A8A}
+#top .clock.warn{background:#A16207}#top .clock.crit{background:#B91C1C}
+#top button{border:0;background:rgba(255,255,255,.12);color:#fff;width:46px;height:46px;border-radius:10px;font-size:22pt}
+/* шаги */
+#steps{position:absolute;left:0;right:0;top:58px;height:54px;background:var(--navy2);display:flex;align-items:center;justify-content:space-between;gap:0;padding:0 6px;font-size:22pt}
+#steps button{border:0;background:transparent;color:#C7D5EA;height:44px;padding:0 5px;border-radius:10px;display:flex;align-items:center;gap:3px;white-space:nowrap}
+#steps button:hover:not(:disabled){background:rgba(255,255,255,.1)}
+#steps button.on{background:#fff;color:var(--navy);font-weight:700}
+#steps button.done{color:#86EFAC}
+#steps button.on.done{color:var(--ok)}
+#steps button:disabled{opacity:.45}
+#steps .n{font-weight:800;color:#FDBA74}
+#steps button.on .n{color:var(--acc)}
+#steps button.done .n{color:#22C55E}
+
+/* карточка задания */
+#card{position:absolute;left:10px;right:10px;top:120px;bottom:10px;background:var(--card);border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.18);display:flex;flex-direction:column;overflow:hidden}
+.ch{flex:none;height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:3px solid var(--acc);font-size:22pt}
+.ch b{font-size:24pt;white-space:nowrap}
+.ch .meta{color:var(--muted);white-space:nowrap}
+.ch .sp{flex:1}
+.badge{padding:2px 12px;border-radius:8px;font-weight:700;white-space:nowrap}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}.badge.mid{background:var(--warn-soft);color:var(--warn)}.badge.bad{background:var(--bad-soft);color:var(--bad)}.badge.new{background:var(--blue-soft);color:var(--blue)}
+.tabs{flex:none;display:flex;gap:4px;padding:6px 12px 0;background:#F1F5F9;border-bottom:2px solid var(--line);font-size:22pt}
+.tabs button{border:0;background:transparent;padding:2px 18px 6px;border-radius:10px 10px 0 0;color:var(--muted)}
+.tabs button.on{background:#fff;color:var(--acc);font-weight:700;box-shadow:0 -3px 0 var(--acc) inset}
+.cb{flex:1;min-height:0;overflow:auto;padding:10px 18px}
+.cf{flex:none;height:60px;display:flex;align-items:center;gap:10px;padding:0 14px;background:#F1F5F9;border-top:2px solid var(--line);font-size:22pt}
+.cf .st{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+
+/* общие */
+p{margin:0 0 8px}
+h3{font-size:26pt;margin:0 0 8px;line-height:1.15}
+.small{font-size:22pt}.muted{color:var(--muted)}
+.btn{border:2px solid var(--acc);background:var(--acc);color:#fff;border-radius:10px;padding:2px 16px;font-weight:700;font-size:22pt;white-space:nowrap}
+.btn:hover:not(:disabled){filter:brightness(1.08)}
+.btn.o{background:#fff;color:var(--acc)}
+.btn.b{background:var(--blue);border-color:var(--blue)}
+.btn.r{background:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.4}
+.chip{border:2px solid #94A3B8;background:#fff;border-radius:999px;padding:0 14px;font-size:22pt;white-space:nowrap;line-height:1.5}
+.chip:hover:not(:disabled){border-color:var(--acc)}
+.chip.on{background:var(--acc-soft);border-color:var(--acc);font-weight:700}
+.chip.ok{background:var(--ok-soft);border-color:var(--ok);color:#14532D;font-weight:700}
+.chip.bad{background:var(--bad-soft);border-color:var(--bad);color:#7F1D1D;text-decoration:line-through}
+.chips{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
+.chips .lbl{font-weight:700;color:var(--navy);margin-right:4px}
+.box{border:2px solid var(--line);border-radius:12px;padding:8px 14px;background:#fff}
+.box.blue{background:var(--blue-soft);border-color:#93C5FD}.box.acc{background:var(--acc-soft);border-color:#F6C08F}.box.ok{background:var(--ok-soft);border-color:#86EFAC}.box.bad{background:var(--bad-soft);border-color:#FCA5A5}
+.src{color:var(--muted);font-style:italic;font-size:22pt}
+input[type=text]{border:2px solid #94A3B8;border-radius:8px;padding:0 10px;background:#fff;font-size:22pt;width:100%;height:42px}
+input[type=text]:focus{border-color:var(--acc)}
+input.okf{border-color:var(--ok);background:var(--ok-soft)}input.badf{border-color:var(--bad);background:var(--bad-soft)}
+table.tb{border-collapse:collapse;width:100%;font-size:22pt}
+.tb th,.tb td{border:2px solid var(--line);padding:2px 10px;text-align:left;vertical-align:middle}
+.tb th{background:#F1F5F9}
+.tb td.c,.tb th.c{text-align:center}
+.tb input{text-align:center;height:38px}
+.nums{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.nums button{min-width:52px;height:44px;border:2px solid #94A3B8;background:#fff;border-radius:10px;font-weight:700;font-size:22pt}
+.nums button.ans{background:var(--blue-soft);border-color:var(--blue);color:var(--blue)}
+.nums button.cur{outline:4px solid var(--acc);outline-offset:1px}
+.nums button.ok{background:var(--ok);border-color:var(--ok);color:#fff}.nums button.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+.qtxt{font-size:26pt;font-weight:700;line-height:1.18;margin-bottom:8px}
+.fbk{margin-top:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 22px}
+.frm{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:8px;align-items:center}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:4px 0;border-bottom:2px solid #E2E8F0}
+.prow .chips{flex-wrap:nowrap}
+.qblk{margin-top:8px}.qblk .ql{font-weight:700;color:var(--navy)}
+.tb.calc3 td{padding:0 10px}.tb.calc3 input{height:36px}
+
+/* старт */
+.start{display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:20px;height:100%}
+.form{background:#F8FAFC;border:2px solid var(--line);border-radius:14px;padding:10px 16px;display:flex;flex-direction:column;gap:6px;font-size:22pt}
+
+/* итоги */
+.res{display:grid;grid-template-columns:250px minmax(0,1fr);gap:20px;height:100%}
+.grade{width:120px;height:120px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:64pt;font-weight:800;color:#fff}
+.g5{background:#15803D}.g4{background:#0F766E}.g3{background:#A16207}.g2{background:#B91C1C}
+.big{font-size:48pt;font-weight:800;line-height:1}
+.bars{display:flex;flex-direction:column;gap:10px;font-size:22pt}
+.bar{display:grid;grid-template-columns:380px minmax(0,1fr) 100px;gap:12px;align-items:center}
+.bar .tr{height:26px;background:#E2E8F0;border-radius:8px;overflow:hidden}
+.bar .tr i{display:block;height:100%;width:0;border-radius:8px}
+.bar .v{text-align:right;font-weight:700}
+.lv{font-weight:700}.lv.l4{color:var(--ok)}.lv.l3{color:#0F766E}.lv.l2{color:var(--warn)}.lv.l1{color:var(--bad)}
+.alist{display:flex;flex-direction:column;gap:6px;font-size:22pt}
+
+/* диалог и уведомление */
+#dlg{position:absolute;inset:0;background:rgba(11,18,32,.6);display:flex;align-items:center;justify-content:center;z-index:50}
+.dbox{background:#fff;border-radius:16px;min-width:620px;max-width:1180px;max-height:680px;overflow:auto;padding:16px 22px;box-shadow:0 30px 70px rgba(0,0,0,.5);font-size:22pt}
+.dbtns{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;flex-wrap:wrap}
+.dbox textarea{width:1120px;height:420px;font-family:var(--mono);font-size:22pt;border:2px solid var(--line);border-radius:10px;padding:8px}
+.calc input{font-family:var(--mono)}
+.calc .out{font-family:var(--mono);font-size:26pt;font-weight:700;color:var(--blue);min-height:40px}
+.calc .keys{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.calc .keys button{min-width:70px;height:46px;border:2px solid var(--line);background:#F8FAFC;border-radius:10px;font-family:var(--mono);font-size:22pt}
+#toast{position:absolute;left:50%;top:5px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:8px 22px;border-radius:12px;z-index:70;max-width:1100px;text-align:center;font-size:22pt;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#printArea{display:none}
+@media print{body{overflow:visible;background:#fff}#stage{display:none}#printArea{display:block}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="top"></div>
+  <div id="steps"></div>
+  <div id="card"></div>
+  <div id="dlg" class="hidden"></div>
+  <div id="toast" class="hidden"></div>
+</div>
+<div id="printArea"></div>
+<script>
+(function(){
+"use strict";
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const r2=x=>Math.round(x*100)/100;
+const pnum=v=>parseFloat(String(v??'').replace(/\s/g,'').replace(',','.').replace(/[^\d.\-eE]/g,''));
+const near=(v,a,d)=>{const x=pnum(v);return !isNaN(x)&&Math.abs(x-a)<=d+1e-9};
+const fmt=(x,d)=>{if(typeof x!=='number')return String(x);const s=d==null?String(r2(x)):x.toFixed(d);return s.replace('.',',')};
+
+/* ======================= ДАННЫЕ ЗАДАНИЙ ======================= */
+const TASKS=[
+ {id:'t1',n:'Термины',full:'Словарь качества',pts:15,min:10},
+ {id:'t2',n:'Показатели',full:'Номенклатура показателей',pts:15,min:15},
+ {id:'t3',n:'Надёжность',full:'Надёжность сетевого оборудования',pts:25,min:20},
+ {id:'t4',n:'Уровень',full:'Оценка уровня качества',pts:20,min:20},
+ {id:'t5',n:'ISO 9000',full:'Стандарты ISO 9000 и принципы',pts:15,min:15},
+ {id:'t6',n:'Аудит',full:'Внутренний аудит по ISO 9001',pts:10,min:10}];
+const COMP={t1:'Терминология качества',t2:'Показатели и методы',t3:'Расчёт надёжности',t4:'Оценка уровня качества',t5:'ISO 9000 и принципы',t6:'Аудит СМК'};
+const RS={t1:'Слайды 5–8: термины, коррекция и КД',t2:'Слайды 12–18: группы и методы',t3:'Слайд 14: формулы To, Tв, Kг',t4:'Слайды 11, 17: q и Q = Σ m·q',t5:'Слайды 20–25: принципы, PDCA',t6:'Слайд 21: разделы ISO 9001'};
+const REC={t1:'Повторите термины ГОСТ Р ИСО 9000-2015 (теория, слайды 5–8): различайте коррекцию и корректирующее действие.',
+ t2:'Повторите группы показателей и методы определения их значений (теория, слайды 12–18).',
+ t3:'Повторите формулы наработки на отказ, времени восстановления и коэффициента готовности (теория, слайд 14).',
+ t4:'Повторите дифференциальный и комплексный методы: q = P / Pбаз или Pбаз / P, Q = Σ m·q (теория, слайды 11, 17).',
+ t5:'Повторите семейство ISO 9000, семь принципов и цикл PDCA (теория, слайды 20–25).',
+ t6:'Повторите структуру разделов ISO 9001 (4–10) и разницу между коррекцией и корректирующим действием.'};
+
+/* --- задание 1 --- */
+const TERMS=['Качество','Требование','Соответствие','Несоответствие','Дефект','Коррекция','Корректирующее действие','Процесс','Удовлетворённость потребителя','Система менеджмента качества','Показатель качества продукции','Уровень качества продукции'];
+const DEFS=[
+ ['Совокупность взаимосвязанных и (или) взаимодействующих видов деятельности, использующих входы для получения намеченного результата.',7,'ГОСТ Р ИСО 9000-2015, 3.4.1'],
+ ['Выполнение требования.',2,'ГОСТ Р ИСО 9000-2015, 3.6.11'],
+ ['Количественная характеристика одного или нескольких свойств продукции, входящих в её качество.',10,'ГОСТ 15467-79, п. 4'],
+ ['Действие, предпринятое для устранения обнаруженного несоответствия.',5,'ГОСТ Р ИСО 9000-2015, 3.12.3'],
+ ['Степень соответствия совокупности присущих характеристик объекта требованиям.',0,'ГОСТ Р ИСО 9000-2015, 3.6.2'],
+ ['Часть системы менеджмента применительно к качеству.',9,'ГОСТ Р ИСО 9000-2015, 3.5.4'],
+ ['Невыполнение требования.',3,'ГОСТ Р ИСО 9000-2015, 3.6.9'],
+ ['Относительная характеристика качества продукции, основанная на сравнении значений её показателей с базовыми значениями.',11,'ГОСТ 15467-79, п. 23'],
+ ['Действие, предпринятое для устранения причины несоответствия и предотвращения его повторного возникновения.',6,'ГОСТ Р ИСО 9000-2015, 3.12.2'],
+ ['Потребность или ожидание, которое установлено, обычно предполагается или является обязательным.',1,'ГОСТ Р ИСО 9000-2015, 3.6.4'],
+ ['Восприятие потребителем степени выполнения его ожиданий.',8,'ГОСТ Р ИСО 9000-2015, 3.9.2'],
+ ['Несоответствие, связанное с предназначенным или установленным использованием.',4,'ГОСТ Р ИСО 9000-2015, 3.6.10']];
+/* --- задание 2 --- */
+const GROUPS=['Назначения','Надёжности','Экономного использования ресурсов','Эргономические','Эстетические','Технологичности','Транспортабельности','Стандартизации и унификации','Патентно-правовые','Экологические','Безопасности'];
+const METHODS=['Измерительный','Регистрационный','Органолептический','Расчётный','Экспертный','Социологический'];
+const IND=[
+ ['Пропускная способность коммутационной матрицы — 176 Гбит/с',0,null],
+ ['Число отказов за год — 3, по журналу учёта отказов',1,1],
+ ['Коэффициент готовности 0,9989 — вычислен по формуле',1,3],
+ ['Защита от поражения электрическим током — класс I',10,null],
+ ['Потребляемая мощность — 60 Вт',2,null],
+ ['Уровень шума — 40 дБА, измерен шумомером',3,0],
+ ['Удобство веб-интерфейса — по анкетам 200 администраторов',3,5],
+ ['Дизайн корпуса — 8 из 10 по оценке комиссии специалистов',4,4],
+ ['Нет царапин и сколов на корпусе — проверено осмотром',4,2],
+ ['Соответствие IEEE 802.3 и креплению в стойку 19″',7,null],
+ ['Содержание свинца, ртути и кадмия в электронике',9,null],
+ ['Масса и габариты упаковки для перевозки — 4,8 кг',6,null]];
+/* --- задание 3 --- */
+const LOG=[['14.01','Зависание после обновления прошивки',2.5],['22.03','Перегрев порта uplink',1.0],['09.06','Отказ блока питания',4.0],['17.09','Сбой конфигурации VLAN',0.5],['05.12','Отказ вентилятора',2.0]];
+const R3=[['n','Число отказов n',5,0,2],['sv','Суммарный простой Σtв, ч',10,0.01,2],['sr','Суммарная наработка Σtраб, ч',8750,0.5,2],['to','Наработка на отказ To, ч',1750,1,4],['tv','Время восстановления Tв, ч',2,0.01,3],['kg','Коэффициент готовности Kг (4 знака)',0.9989,0.00011,4],['a','Доступность A = Kг · 100, %',99.89,0.011,2],['p','Вероятность P(720 ч) = e^(−720/To)',0.6627,0.002,3]];
+/* --- задание 4 --- */
+const Q4=[['Пропускная способность, Гбит/с',0.35,176,176,128,1],['Наработка на отказ, тыс. ч',0.30,400,300,500,1],['Потребляемая мощность, Вт',0.20,60,50,75,0],['Уровень шума, дБА',0.15,40,45,32,0]];
+const qv=(r,x)=>r[5]?x/r[2]:r[2]/x;
+const QA=Q4.reduce((s,r)=>s+r[1]*qv(r,r[3]),0), QB=Q4.reduce((s,r)=>s+r[1]*qv(r,r[4]),0);
+const T4Q=[['Какой коммутатор выбрать для закупки?',['Коммутатор A','Коммутатор B','Оба одинаковы'],1],['Уровень качества выбранного коммутатора по сравнению с базовым образцом:',['выше (Q > 1)','равен (Q = 1)','ниже (Q < 1)'],2],['Почему для мощности и шума q = Pбаз / P?',['так проще считать','меньшее значение — лучше','показатели комплексные'],1]];
+/* --- задание 5 --- */
+const STDS=['ISO 9000','ISO 9001','ISO 9004','ISO 19011'];
+const STDOPT=['Основные положения и словарь','Требования к СМК — по нему сертифицируют','Менеджмент для устойчивого успеха организации','Руководящие указания по аудиту систем менеджмента','Требования к защите информации'];
+const PRINC=['Ориентация на потребителя','Лидерство','Взаимодействие людей','Процессный подход','Улучшение','Принятие решений на основе свидетельств','Менеджмент взаимоотношений'];
+const SIT=[['Перед продлением договора отдел опрашивает клиентов о качестве технической поддержки.',0],['Модель роутеров заменили по статистике отказов из системы мониторинга.',5],['Работа с заявкой описана цепочкой: приём → диагностика → решение → закрытие, у каждого этапа есть владелец.',3],['С поставщиком коммутаторов заключили долгосрочное соглашение и совместно планируют поставки.',6],['Директор утвердил политику в области качества и сам объяснил её сотрудникам.',1],['Каждый квартал по итогам разбора инцидентов обновляют регламенты работы.',4],['Инженеры сами предлагают улучшения, лучшие идеи поощряют премией.',2]];
+const PDCA=[['Сравнить число сбоев Wi-Fi за месяц до и после замены',2],['Утвердить новую модель в регламенте и заменить точки на всех этажах',3],['Проанализировать журнал сбоев и запланировать замену точек доступа',0],['Заменить точки доступа на одном пробном этаже',1]];
+const PL=['P — планируй','D — делай','C — проверяй','A — действуй'];
+/* --- задание 6 --- */
+const CLAUSES=['4 Среда организации','5 Лидерство','6 Планирование','7 Средства обеспечения','8 Деятельность (жизненный цикл продукции и услуг)','9 Оценка результатов деятельности','10 Улучшение'];
+const FIND=[['Инженеры поддержки не знают политику в области качества: её не довели до персонала.',1],['Для услуги монтажа сетей не определены риски и возможности.',2],['У монтажника истёк сертификат обучения, компетентность не подтверждена.',3],['Заявки закрываются без проверки результата работ у клиента.',4],['Удовлетворённость клиентов не измеряется, внутренний аудит не проводился два года.',5]];
+const ACTS=[['Перезагрузили зависший коммутатор у клиента',0],['Обновили прошивку всех коммутаторов серии после анализа причины зависаний',1],['Заменили повреждённый патч-корд',0],['Ввели обязательную проверку линий тестером перед сдачей объекта',1],['Переобучили монтажника, ввели контроль сроков сертификатов',1]];
+const AK=['Коррекция','Корректирующее действие'];
+
+/* ======================= СОСТОЯНИЕ ======================= */
+const S={name:'',group:'',t0:0,tEnd:0,limit:5400,fin:false,view:'start',
+ t1:{a:{},cur:0,done:false},t2:{g:{},m:{},cur:0,done:false},t3:{v:{},sla:null,tab:0,done:false},t4:{q:{},c:{},tab:0,done:false},
+ t5:{s:{},p:{},d:{},tab:0,cur:0,done:false},t6:{f:{},a:{},tab:0,cur:0,done:false},rtab:0};
+
+/* ======================= БАЛЛЫ ======================= */
+const sc={
+ t1:()=>S.t1.done?DEFS.filter((d,i)=>S.t1.a[i]===d[1]).length*1.25:0,
+ t2:()=>S.t2.done?IND.filter((x,i)=>S.t2.g[i]===x[1]).length*0.75+IND.filter((x,i)=>x[2]!=null&&S.t2.m[i]===x[2]).length:0,
+ t3:()=>S.t3.done?R3.filter(r=>near(S.t3.v[r[0]],r[2],r[3])).reduce((s,r)=>s+r[4],0)+(S.t3.sla===1?3:0):0,
+ t4:()=>{if(!S.t4.done)return 0;let v=0;Q4.forEach((r,i)=>{if(near(S.t4.q['a'+i],qv(r,r[3]),0.011))v++;if(near(S.t4.q['b'+i],qv(r,r[4]),0.011))v++});if(near(S.t4.q.QA,QA,0.0051))v+=3;if(near(S.t4.q.QB,QB,0.0051))v+=3;T4Q.forEach((q,i)=>{if(S.t4.c[i]===q[2])v+=2});return v},
+ t5:()=>S.t5.done?STDS.filter((s,i)=>S.t5.s[i]===i).length+SIT.filter((s,i)=>S.t5.p[i]===s[1]).length+PDCA.filter((s,i)=>S.t5.d[i]===s[1]).length:0,
+ t6:()=>S.t6.done?FIND.filter((f,i)=>S.t6.f[i]===f[1]).length+ACTS.filter((a,i)=>S.t6.a[i]===a[1]).length:0};
+const SC=id=>r2(sc[id]());
+const total=()=>r2(TASKS.reduce((s,t)=>s+sc[t.id](),0));
+const done=id=>S[id].done;
+function grade(t){return t>=85?[5,'отлично']:t>=70?[4,'хорошо']:t>=50?[3,'удовлетворительно']:[2,'неудовлетворительно']}
+function level(p){return p>=85?['Высокий','l4']:p>=70?['Достаточный','l3']:p>=50?['Базовый','l2']:['Низкий','l1']}
+const bcls=(v,m)=>v>=m*.85?'ok':v>=m*.5?'mid':'bad';
+
+/* ======================= СЦЕНА ======================= */
+const stage=$('#stage');
+function fit(){const s=Math.min(window.innerWidth/1280,window.innerHeight/720);const x=(window.innerWidth-1280*s)/2,y=(window.innerHeight-720*s)/2;stage.style.transform=`translate(${x}px,${y}px) scale(${s})`}
+window.addEventListener('resize',fit);fit();
+stage.addEventListener('scroll',()=>{stage.scrollLeft=0;stage.scrollTop=0});
+let toastT;function toast(t){const d=$('#toast');d.textContent=t;d.classList.remove('hidden');clearTimeout(toastT);toastT=setTimeout(()=>d.classList.add('hidden'),3200)}
+let DLG=[],PICK=null;
+function dialog(title,html,buttons){DLG=buttons||[{t:'OK'}];const d=$('#dlg');d.innerHTML=`<div class="dbox"><h3>${esc(title)}</h3><div>${html}</div><div class="dbtns">${DLG.map((b,k)=>`<button class="btn ${b.cls||''}" data-a="dlgb" data-v="${k}">${esc(b.t)}</button>`).join('')}</div></div>`;d.classList.remove('hidden')}
+function closeDlg(){const d=$('#dlg');d.classList.add('hidden');d.innerHTML=''}
+const ask=(title,text,yes,fn,cls)=>dialog(title,`<p>${text}</p>`,[{t:'Отмена',cls:'o'},{t:yes,cls:cls||'',fn}]);
+
+/* шапка и шаги */
+function renderTop(){$('#top').innerHTML=`<span class="logo">СМК</span><span class="ttl">Отдел качества · ООО «СетьСервис»</span><span class="sp"></span>${S.name?`<span class="who">${esc(S.name)}, ${esc(S.group)}</span>`:''}<span class="pill">${fmt(total())} / 100</span><span class="pill clock" id="clock">90:00</span><button data-a="full" title="Полный экран">⛶</button>`;tick()}
+function renderSteps(){const items=[['start','Старт'],...TASKS.map((t,i)=>[t.id,`<span class="n">${done(t.id)?'✓':i+1}</span>${t.n}`]),['res','Итоги']];
+ $('#steps').innerHTML=items.map(([id,l])=>`<button class="${S.view===id?'on':''}${id[0]==='t'&&done(id)?' done':''}" data-a="go" data-v="${id}"${!S.t0&&id!=='start'?' disabled':''}>${l}</button>`).join('')}
+const V={};
+function render(){renderTop();renderSteps();renderCard()}
+function renderCard(keep){const c=$('#card'),v=V[S.view];const sc0=keep&&$('.cb')?$('.cb').scrollTop:0;
+ const t=TASKS.find(x=>x.id===S.view);const tabs=v.tabs?v.tabs():null;const f=v.foot();
+ c.innerHTML=`<div class="ch"><b>${t?`Задание ${TASKS.indexOf(t)+1}. ${esc(t.full)}`:esc(v.title)}</b><span class="sp"></span>${t?`<span class="meta">${t.min} мин · ${t.pts} баллов</span>${done(t.id)?`<span class="badge ${bcls(sc[t.id](),t.pts)}">${fmt(SC(t.id))} / ${t.pts}</span>`:'<span class="badge new">не сдано</span>'}`:''}</div>
+ ${tabs?`<div class="tabs">${tabs.map((x,k)=>`<button class="${k===v.tab()?'on':''}" data-a="tab" data-v="${k}">${x}</button>`).join('')}</div>`:''}
+ <div class="cb">${v.body()}</div><div class="cf"><span class="st">${f[0]}</span>${f[1]}</div>`;
+ $$('[data-w]',c).forEach(e=>{e.style.width=e.dataset.w+'%';if(e.dataset.c)e.style.background=e.dataset.c});
+ if(sc0)$('.cb').scrollTop=sc0;v.bind&&v.bind();
+ if(S.fin&&S.view!=='res')$$('.cb button:not(.keep),.cb input',c).forEach(b=>b.disabled=true);}
+const subBtn=id=>S[id].done||S.fin?'':`<button class="btn" data-a="submit" data-v="${id}">Сдать задание</button>`;
+const nextBtn=id=>{const i=TASKS.findIndex(t=>t.id===id);const n=TASKS[i+1];return `<button class="btn o keep" data-a="go" data-v="${n?n.id:'res'}">${n?'Задание '+(i+2)+' →':'Итоги →'}</button>`};
+const calcBtn='<button class="btn b keep" data-a="calc">Калькулятор</button>';
+const inp=(path,val,cls)=>`<input type="text" data-in="${path}" value="${esc(val??'')}" class="${cls||''}" autocomplete="off">`;
+const chipCls=(on,isOk,isRight,d)=>d?(isRight?' ok':(on?' bad':'')):(on?' on':'');
+function numStrip(n,cur,stateFn,act){return `<div class="nums">${Array.from({length:n},(_,i)=>`<button class="${i===cur?'cur ':''}${stateFn(i)}" data-a="${act}" data-v="${i}">${i+1}</button>`).join('')}</div>`}
+
+/* ---------- старт ---------- */
+V.start={title:'Практическая работа: показатели качества и ISO 9000',
+ body:()=>`<div class="start"><div>
+ <p><b>Ситуация.</b> Вы — специалист отдела качества интегратора «СетьСервис». Компания готовится к сертификации по ISO 9001.</p>
+ <table class="tb calc3"><tr><th>Задание</th><th class="c">Мин</th><th class="c">Баллы</th></tr>${TASKS.map((t,i)=>`<tr><td>${i+1}. ${esc(t.full)}</td><td class="c">${t.min}</td><td class="c">${t.pts}</td></tr>`).join('')}</table></div>
+ <div class="form">${S.t0?`<h3>Работа начата</h3><p>${esc(S.name)}<br>${esc(S.group)}</p><button class="btn keep" data-a="go" data-v="t1">К заданию 1 →</button>`:`<h3>Регистрация</h3><label>Фамилия и имя</label><input type="text" id="fn" autocomplete="off"><label>Группа</label><input type="text" id="fg" autocomplete="off"><button class="btn" data-a="start">▶ Начать (90 минут)</button>`}</div></div>`,
+ foot:()=>['Задание сдаётся один раз. Оценка: от 85 — «5», от 70 — «4», от 50 — «3».',''],
+ bind:()=>{const g=$('#fg');if(g)g.addEventListener('keydown',e=>{if(e.key==='Enter')ACT.start()})}};
+
+/* ---------- задание 1 ---------- */
+V.t1={body:()=>{const T=S.t1,c=T.cur,d=T.done,D=DEFS[c];
+ return numStrip(12,c,i=>d?(T.a[i]===DEFS[i][1]?'ok':'bad'):(T.a[i]!=null?'ans':''),'t1go')+
+ `<div class="qtxt">${esc(D[0])}</div><p class="src">${esc(D[2])}</p><div class="chips"><span class="lbl">Термин:</span>${TERMS.map((t,j)=>`<button class="chip${chipCls(T.a[c]===j,0,j===D[1],d)}" data-a="t1ans" data-v="${j}">${esc(t)}</button>`).join('')}</div>`},
+ foot:()=>[done('t1')?`Верно ${DEFS.filter((d,i)=>S.t1.a[i]===d[1]).length} из 12`:`Подобрано: ${Object.keys(S.t1.a).length} из 12. Определение → термин.`,subBtn('t1')+nextBtn('t1')]};
+
+/* ---------- задание 2 ---------- */
+V.t2={body:()=>{const T=S.t2,c=T.cur,d=T.done,X=IND[c];
+ const st=i=>{if(d){const ok=T.g[i]===IND[i][1]&&(IND[i][2]==null||T.m[i]===IND[i][2]);return ok?'ok':'bad'}return T.g[i]!=null&&(IND[i][2]==null||T.m[i]!=null)?'ans':''};
+ return numStrip(12,c,st,'t2go')+`<div class="qtxt">${esc(X[0])}</div>
+ <div class="chips"><span class="lbl">Группа:</span>${GROUPS.map((g,j)=>`<button class="chip${chipCls(T.g[c]===j,0,j===X[1],d)}" data-a="t2g" data-v="${j}">${esc(g)}</button>`).join('')}</div>
+ ${X[2]!=null?`<div class="chips" data-x="m"><span class="lbl">Метод определения:</span>${METHODS.map((m,j)=>`<button class="chip${chipCls(T.m[c]===j,0,j===X[2],d)}" data-a="t2m" data-v="${j}">${esc(m)}</button>`).join('')}</div>`:''}`},
+ foot:()=>{const n=IND.filter((x,i)=>S.t2.g[i]!=null&&(x[2]==null||S.t2.m[i]!=null)).length;return [done('t2')?`Группы: ${IND.filter((x,i)=>S.t2.g[i]===x[1]).length}/12, методы: ${IND.filter((x,i)=>x[2]!=null&&S.t2.m[i]===x[2]).length}/6`:`Готово карточек: ${n} из 12. У шести показателей укажите и метод.`,subBtn('t2')+nextBtn('t2')]},
+ bind:()=>{const m=$('[data-x="m"]');if(m)m.style.marginTop='10px'}};
+
+/* ---------- задание 3 ---------- */
+V.t3={tabs:()=>['Журнал отказов','Расчёт','Вывод'],tab:()=>S.t3.tab,
+ body:()=>{const T=S.t3,d=T.done;
+  if(T.tab===0)return `<p><b>Ядро сети клиента</b> — коммутатор S-2400. Наблюдение: 1 год = <b>8760 ч</b>. Договор (SLA): доступность не ниже <b>99,9 %</b>.</p>
+   <table class="tb"><tr><th class="c">Дата</th><th>Событие</th><th class="c">Простой, ч</th></tr>${LOG.map(l=>`<tr><td class="c">${l[0]}</td><td>${esc(l[1])}</td><td class="c">${fmt(l[2],1)}</td></tr>`).join('')}</table>`;
+  if(T.tab===1)return `<p class="small muted">To = Σtраб / n · Tв = Σtв / n · Kг = To / (To + Tв) · P(t) = e^(−t / To)</p><table class="tb calc3">${R3.map(r=>{const ok=near(T.v[r[0]],r[2],r[3]);return `<tr><td>${esc(r[1])}</td><td class="c" data-w="20">${inp('t3.v.'+r[0],T.v[r[0]],d?(ok?'okf':'badf'):'')}</td><td class="c" data-w="10">${r[4]} б.</td>${d?`<td class="c" data-w="17">${String(r[2]).replace('.',',')}</td>`:''}</tr>`}).join('')}</table>`;
+  return `<div class="qtxt">Выполнено ли требование SLA (доступность не ниже 99,9 %)? <span class="muted small">(3 б.)</span></div><div class="chips">${['Да, выполнено','Нет, не выполнено'].map((o,j)=>`<button class="chip${chipCls(T.sla===j,0,j===1,d)}" data-a="t3sla" data-v="${j}">${o}</button>`).join('')}</div>
+   ${d?`<div class="box ${T.sla===1?'ok':'bad'} fbk">Доступность 99,89 % ниже 99,9 %: за год простой 10 ч, а договор допускает лишь около 8,8 ч. Нужны корректирующие действия: например, резервный блок питания.</div>`:'<p class="muted fbk">Подсказка: сравните доступность A с требованием договора.</p>'}`},
+ foot:()=>{const n=R3.filter(r=>String(S.t3.v[r[0]]??'').trim()).length+(S.t3.sla!=null?1:0);return [done('t3')?`Верных значений: ${R3.filter(r=>near(S.t3.v[r[0]],r[2],r[3])).length} из 8`:`Заполнено: ${n} из 9`,calcBtn+subBtn('t3')+nextBtn('t3')]}};
+
+/* ---------- задание 4 ---------- */
+V.t4={tabs:()=>['Исходные данные','Расчёт q','Комплексный показатель'],tab:()=>S.t4.tab,
+ body:()=>{const T=S.t4,d=T.done;
+  if(T.tab===0)return `<p>Выберите коммутатор для закупки. Базовый образец — эталон рынка. Метод — <b>комплексный</b>, по весам m.</p>
+   <table class="tb"><tr><th>Показатель</th><th class="c">Вес m</th><th class="c">База</th><th class="c">A</th><th class="c">B</th><th class="c">Лучше</th></tr>${Q4.map(r=>`<tr><td>${esc(r[0])}</td><td class="c">${fmt(r[1])}</td><td class="c">${r[2]}</td><td class="c">${r[3]}</td><td class="c">${r[4]}</td><td class="c">${r[5]?'больше':'меньше'}</td></tr>`).join('')}</table>`;
+  if(T.tab===1)return `<p class="small muted">q = P / Pбаз — если больше лучше; q = Pбаз / P — если меньше лучше. Точность 0,01.</p>
+   <table class="tb"><tr><th>Показатель</th><th class="c" data-w="19">qA (1 б.)</th><th class="c" data-w="19">qB (1 б.)</th>${d?'<th class="c" data-w="17">Верно</th>':''}</tr>${Q4.map((r,i)=>{const a=near(T.q['a'+i],qv(r,r[3]),0.011),b=near(T.q['b'+i],qv(r,r[4]),0.011);return `<tr><td>${esc(r[0])}</td><td>${inp('t4.q.a'+i,T.q['a'+i],d?(a?'okf':'badf'):'')}</td><td>${inp('t4.q.b'+i,T.q['b'+i],d?(b?'okf':'badf'):'')}</td>${d?`<td class="c">${fmt(qv(r,r[3]),2)} / ${fmt(qv(r,r[4]),2)}</td>`:''}</tr>`}).join('')}</table>`;
+  const qa=near(T.q.QA,QA,0.0051),qb=near(T.q.QB,QB,0.0051);
+  return `<div class="grid2"><label class="frm"><span>QA = Σ m·qA (3 б.)</span>${inp('t4.q.QA',T.q.QA,d?(qa?'okf':'badf'):'')}</label><label class="frm"><span>QB = Σ m·qB (3 б.)</span>${inp('t4.q.QB',T.q.QB,d?(qb?'okf':'badf'):'')}</label></div><p class="small ${d?'':'muted'}">${d?`Верно: QA = ${fmt(QA,3)}, QB = ${fmt(QB,3)}.`:'Три знака после запятой, точность 0,005.'}</p>
+   ${T4Q.map((q,i)=>`<div class="qblk"><div class="ql">${i+1}. ${esc(q[0])} <span class="muted small">(2 б.)</span></div><div class="chips">${q[1].map((o,j)=>`<button class="chip${chipCls(T.c[i]===j,0,j===q[2],d)}" data-a="t4c" data-v="${i}:${j}">${esc(o)}</button>`).join('')}</div></div>`).join('')}`},
+ foot:()=>{const n=Object.values(S.t4.q).filter(v=>String(v).trim()).length+Object.keys(S.t4.c).length;return [done('t4')?`QA = ${fmt(QA,3)}, QB = ${fmt(QB,3)} — выгоднее коммутатор B`:`Заполнено: ${n} из 13`,calcBtn+subBtn('t4')+nextBtn('t4')]},
+ };
+
+/* ---------- задание 5 ---------- */
+V.t5={tabs:()=>['Стандарты','Принципы','Цикл PDCA'],tab:()=>S.t5.tab,
+ body:()=>{const T=S.t5,d=T.done;
+  if(T.tab===0)return `<p>Укажите назначение каждого стандарта семейства ISO 9000 (по 1 б.).</p>${STDS.map((s,i)=>`<div class="chips" data-x="s"><span class="lbl">${s}</span><button class="btn ${T.s[i]!=null?'b':'o'}" data-a="t5s" data-v="${i}">${T.s[i]!=null?esc(STDOPT[T.s[i]]):'выбрать…'}</button>${d?(T.s[i]===i?'<span class="badge ok">верно</span>':`<span class="badge bad">верно: ${esc(STDOPT[i])}</span>`):''}</div>`).join('')}`;
+  if(T.tab===1){const c=T.cur,X=SIT[c];return numStrip(7,c,i=>d?(T.p[i]===SIT[i][1]?'ok':'bad'):(T.p[i]!=null?'ans':''),'t5go')+`<div class="qtxt">${esc(X[0])}</div><div class="chips"><span class="lbl">Принцип:</span>${PRINC.map((p,j)=>`<button class="chip${chipCls(T.p[c]===j,0,j===X[1],d)}" data-a="t5p" data-v="${j}">${esc(p)}</button>`).join('')}</div>`}
+  return `<p>Сбои Wi-Fi у клиента. Отнесите действие к этапу цикла PDCA (по 1 б.).</p>${PDCA.map((a,i)=>`<div class="prow"><span>${i+1}. ${esc(a[0])}</span><div class="chips">${PL.map((p,j)=>`<button class="chip${chipCls(T.d[i]===j,0,j===a[1],d)}" data-a="t5d" data-v="${i}:${j}" title="${esc(p)}">${p[0]}</button>`).join('')}</div></div>`).join('')}<p class="small muted fbk">P — планируй, D — делай, C — проверяй, A — действуй.</p>`},
+ foot:()=>{const n=Object.keys(S.t5.s).length+Object.keys(S.t5.p).length+Object.keys(S.t5.d).length;return [done('t5')?`Стандарты ${STDS.filter((s,i)=>S.t5.s[i]===i).length}/4, принципы ${SIT.filter((s,i)=>S.t5.p[i]===s[1]).length}/7, PDCA ${PDCA.filter((s,i)=>S.t5.d[i]===s[1]).length}/4`:`Ответов: ${n} из 15`,subBtn('t5')+nextBtn('t5')]},
+ bind:()=>{$$('[data-x="s"]').forEach(e=>{e.style.margin='0 0 8px';e.style.paddingBottom='6px';e.style.borderBottom='2px solid #E2E8F0'})}};
+
+/* ---------- задание 6 ---------- */
+V.t6={tabs:()=>['Замечания аудитора','Коррекция или корректирующее действие'],tab:()=>S.t6.tab,
+ body:()=>{const T=S.t6,d=T.done;
+  if(T.tab===0){const c=T.cur,X=FIND[c];return `<p class="small muted">Найдите раздел ISO 9001, требование которого нарушено (по 1 б.).</p>`+numStrip(5,c,i=>d?(T.f[i]===FIND[i][1]?'ok':'bad'):(T.f[i]!=null?'ans':''),'t6go')+`<div class="qtxt">${esc(X[0])}</div><div class="chips">${CLAUSES.map((p,j)=>`<button class="chip${chipCls(T.f[c]===j,0,j===X[1],d)}" data-a="t6f" data-v="${j}">${esc(p)}</button>`).join('')}</div>`}
+  return `<table class="tb calc3"><tr><th>Действие (по 1 б.)</th>${AK.map(k=>`<th class="c" data-w="${k.length>10?20:15}">${k}</th>`).join('')}</tr>${ACTS.map((a,i)=>`<tr><td>${i+1}. ${esc(a[0])}</td>${AK.map((k,j)=>{const on=T.a[i]===j,c=chipCls(on,0,j===a[1],d);return `<td class="c"><button class="chip${c}" data-a="t6a" data-v="${i}:${j}" aria-label="${k}">${d?(j===a[1]?'✓':(on?'✗':'·')):(on?'●':'○')}</button></td>`}).join('')}</tr>`).join('')}</table>`},
+ foot:()=>{const n=Object.keys(S.t6.f).length+Object.keys(S.t6.a).length;return [done('t6')?`Разделы ${FIND.filter((f,i)=>S.t6.f[i]===f[1]).length}/5, действия ${ACTS.filter((a,i)=>S.t6.a[i]===a[1]).length}/5`:`Ответов: ${n} из 10`,subBtn('t6')+nextBtn('t6')]},
+ bind:()=>V.t5.bind()};
+
+/* ---------- итоги и анализ ---------- */
+function used(){if(!S.t0)return '0 мин';const e=Math.min(S.limit,Math.floor(((S.fin?S.tEnd:Date.now())-S.t0)/1000));return `${Math.floor(e/60)} мин ${e%60} с`}
+function analysis(){const rows=TASKS.map(t=>{const v=sc[t.id](),p=t.pts?Math.round(v/t.pts*100):0;return {t,v,p,lv:level(p),d:done(t.id)}});
+ const sub=rows.filter(r=>r.d);const best=sub.slice().sort((a,b)=>b.p-a.p)[0],worst=sub.slice().sort((a,b)=>a.p-b.p)[0];
+ const weak=rows.filter(r=>r.p<70);return {rows,best,worst,weak}}
+V.res={title:'Итоги и анализ',tabs:()=>['Результат','Анализ'],tab:()=>S.rtab,
+ body:()=>{const T=total(),[g,gt]=grade(T),A=analysis();
+  if(S.rtab===0)return `<div class="res"><div><div class="row"><div class="grade g${g}">${g}</div><div><div class="big">${fmt(T)}</div><div class="muted">из 100</div></div></div><p class="small" data-x="1">Оценка: <b>${g} (${gt})</b></p><p class="small muted">Время: ${used()}</p></div>
+   <div class="bars">${A.rows.map(r=>`<div class="bar"><span>${esc(COMP[r.t.id])}</span><span class="tr"><i data-w="${r.p}" data-c="${r.p>=85?'#15803D':r.p>=70?'#0F766E':r.p>=50?'#CA8A04':'#B91C1C'}"></i></span><span class="v">${r.d?r.p+' %':'—'}</span></div>`).join('')}</div></div>`;
+  const L=answerRows().filter(r=>done(TASKS[+r[0]-1].id)),bad=L.filter(r=>!r[4]),per=TASKS.map((t,i)=>[i+1,bad.filter(r=>r[0]==String(i+1)).length]).sort((a,b)=>b[1]-a[1]);
+  return `<div class="alist"><div class="box blue"><b>Ответов в сданных заданиях:</b> ${L.length}, верных — ${L.length-bad.length}, ошибок — ${bad.length}${L.length?` (${Math.round(bad.length/L.length*100)} %)`:''}.${bad.length?` Больше всего ошибок в задании ${per[0][0]} (${per[0][1]}).`:''}${A.best&&A.worst&&A.worst!==A.best?` Сильная сторона — ${esc(COMP[A.best.t.id])}, слабое место — ${esc(COMP[A.worst.t.id])}.`:''}</div>
+   <table class="tb calc3"><tr><th>Компетенция</th><th class="c">%</th><th>Уровень</th><th>Что повторить</th></tr>${A.rows.map(r=>`<tr><td>${esc(COMP[r.t.id])}</td><td class="c">${r.d?r.p:'—'}</td><td><span class="lv ${r.d?r.lv[1]:'l1'}">${r.d?r.lv[0]:'Не сдано'}</span></td><td>${r.p>=70?'<span class="muted">освоено</span>':esc(RS[r.t.id])}</td></tr>`).join('')}</table></div>`},
+ foot:()=>[S.fin?'Работа сдана. Сохраните отчёт.':'Несданные задания оцениваются в 0 баллов.',(S.fin?'':'<button class="btn r keep" data-a="finish">Сдать работу</button>')+'<button class="btn keep" data-a="report">Отчёт</button><button class="btn o keep" data-a="print">Печать</button>']};
+
+/* ======================= ОТЧЁТ ======================= */
+function answerRows(){const L=[];const y=(ok)=>ok?'✓':'✗';
+ DEFS.forEach((d,i)=>L.push(['1',d[0],S.t1.a[i]!=null?TERMS[S.t1.a[i]]:'—',TERMS[d[1]],S.t1.a[i]===d[1]]));
+ IND.forEach((x,i)=>{L.push(['2',x[0],S.t2.g[i]!=null?GROUPS[S.t2.g[i]]:'—',GROUPS[x[1]],S.t2.g[i]===x[1]]);if(x[2]!=null)L.push(['2','  метод',S.t2.m[i]!=null?METHODS[S.t2.m[i]]:'—',METHODS[x[2]],S.t2.m[i]===x[2]])});
+ R3.forEach(r=>L.push(['3',r[1],S.t3.v[r[0]]||'—',fmt(r[2]),near(S.t3.v[r[0]],r[2],r[3])]));L.push(['3','SLA выполнен?',S.t3.sla==null?'—':['да','нет'][S.t3.sla],'нет',S.t3.sla===1]);
+ Q4.forEach((r,i)=>{L.push(['4','qA: '+r[0],S.t4.q['a'+i]||'—',fmt(qv(r,r[3]),2),near(S.t4.q['a'+i],qv(r,r[3]),0.011)]);L.push(['4','qB: '+r[0],S.t4.q['b'+i]||'—',fmt(qv(r,r[4]),2),near(S.t4.q['b'+i],qv(r,r[4]),0.011)])});
+ L.push(['4','QA',S.t4.q.QA||'—',fmt(QA,3),near(S.t4.q.QA,QA,0.0051)]);L.push(['4','QB',S.t4.q.QB||'—',fmt(QB,3),near(S.t4.q.QB,QB,0.0051)]);
+ T4Q.forEach((q,i)=>L.push(['4',q[0],S.t4.c[i]!=null?q[1][S.t4.c[i]]:'—',q[1][q[2]],S.t4.c[i]===q[2]]));
+ STDS.forEach((s,i)=>L.push(['5',s,S.t5.s[i]!=null?STDOPT[S.t5.s[i]]:'—',STDOPT[i],S.t5.s[i]===i]));
+ SIT.forEach((s,i)=>L.push(['5',s[0],S.t5.p[i]!=null?PRINC[S.t5.p[i]]:'—',PRINC[s[1]],S.t5.p[i]===s[1]]));
+ PDCA.forEach((s,i)=>L.push(['5',s[0],S.t5.d[i]!=null?PL[S.t5.d[i]]:'—',PL[s[1]],S.t5.d[i]===s[1]]));
+ FIND.forEach((f,i)=>L.push(['6',f[0],S.t6.f[i]!=null?CLAUSES[S.t6.f[i]]:'—',CLAUSES[f[1]],S.t6.f[i]===f[1]]));
+ ACTS.forEach((a,i)=>L.push(['6',a[0],S.t6.a[i]!=null?AK[S.t6.a[i]]:'—',AK[a[1]],S.t6.a[i]===a[1]]));
+ return L}
+function reportHTML(){const T=total(),[g,gt]=grade(T),A=analysis(),L=answerRows(),dt=new Date().toLocaleString('ru-RU');
+ return `<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>Отчёт — ${esc(S.name||'студент')}</title><style>
+body{font-family:"Times New Roman",serif;font-size:14pt;color:#000;max-width:190mm;margin:10mm auto;line-height:1.35}
+h1{font-size:18pt;text-align:center;margin:0 0 4mm}h2{font-size:15pt;margin:6mm 0 2mm}
+table{border-collapse:collapse;width:100%;font-size:12pt}th,td{border:1px solid #000;padding:2px 6px;vertical-align:top}th{background:#eee}
+.ok{color:#15803d;font-weight:bold}.no{color:#b91c1c;font-weight:bold}.sig{margin-top:12mm;display:flex;justify-content:space-between}
+.bar{height:10px;background:#ddd}.bar i{display:block;height:10px;background:#0b2545}
+</style></head><body>
+<h1>Отчёт о выполнении практической работы</h1>
+<p><b>Дисциплина:</b> ОП.09 Стандартизация, сертификация и техническое документоведение<br><b>Тема:</b> Основные понятия и показатели качества. Система международных стандартов ISO серии 9000<br><b>Студент:</b> ${esc(S.name||'—')} &nbsp; <b>Группа:</b> ${esc(S.group||'—')}<br><b>Дата:</b> ${dt} &nbsp; <b>Время работы:</b> ${used()} из 90 мин &nbsp; <b>Статус:</b> ${S.fin?'работа сдана':'промежуточный отчёт'}</p>
+<h2>1. Результаты</h2><table><tr><th>№</th><th>Задание</th><th>Баллы</th><th>%</th><th>Уровень</th></tr>${A.rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.t.full)}</td><td>${fmt(r2(r.v))} / ${r.t.pts}</td><td>${r.d?r.p:'—'}</td><td>${r.d?r.lv[0]:'не сдано'}</td></tr>`).join('')}<tr><th></th><th>Итого</th><th>${fmt(T)} / 100</th><th colspan="2">Оценка: ${g} (${gt})</th></tr></table>
+<h2>2. Анализ по компетенциям</h2><table><tr><th>Компетенция</th><th style="width:45%">Освоение</th><th>%</th></tr>${A.rows.map(r=>`<tr><td>${esc(COMP[r.t.id])}</td><td><div class="bar"><i style="width:${r.p}%"></i></div></td><td>${r.d?r.p:'—'}</td></tr>`).join('')}</table>
+<p>${A.best?`Сильная сторона: <b>${esc(COMP[A.best.t.id])}</b> (${A.best.p} %). `:''}${A.worst&&A.worst!==A.best?`Слабое место: <b>${esc(COMP[A.worst.t.id])}</b> (${A.worst.p} %).`:''}</p>
+<h2>3. Рекомендации</h2>${A.weak.length?'<ul>'+A.weak.map(r=>`<li><b>${esc(COMP[r.t.id])}:</b> ${esc(REC[r.t.id])}</li>`).join('')+'</ul>':'<p>Все компетенции освоены на уровне «достаточный» и выше.</p>'}
+<h2>4. Ответы студента</h2><table><tr><th>Зад.</th><th>Вопрос</th><th>Ответ студента</th><th>Верный ответ</th><th></th></tr>${L.map(r=>`<tr><td>${r[0]}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td class="${r[4]?'ok':'no'}">${r[4]?'✓':'✗'}</td></tr>`).join('')}</table>
+<div class="sig"><span>Студент: ____________ / ${esc(S.name||'')}</span><span>Преподаватель: ____________ / ____________</span></div>
+</body></html>`}
+function reportTXT(){const T=total(),[g,gt]=grade(T),A=analysis();return `ОТЧЁТ О ВЫПОЛНЕНИИ ПРАКТИЧЕСКОЙ РАБОТЫ
+ОП.09 Стандартизация, сертификация и техническое документоведение
+Тема: Основные понятия и показатели качества. Система стандартов ISO серии 9000
+Студент: ${S.name||'—'}   Группа: ${S.group||'—'}
+Дата: ${new Date().toLocaleString('ru-RU')}   Время: ${used()} из 90 мин
+Статус: ${S.fin?'работа сдана':'промежуточный отчёт'}
+
+${A.rows.map((r,i)=>`${i+1}. ${r.t.full}: ${fmt(r2(r.v))} / ${r.t.pts} (${r.d?r.p+' %, '+r.lv[0]:'не сдано'})`).join('\n')}
+ИТОГО: ${fmt(T)} / 100   ОЦЕНКА: ${g} (${gt})
+
+Рекомендации:
+${A.weak.length?A.weak.map(r=>'- '+COMP[r.t.id]+': '+REC[r.t.id]).join('\n'):'- Все компетенции освоены на уровне «достаточный» и выше.'}
+
+Ответы (✓ верно, ✗ неверно):
+${answerRows().map(r=>`[${r[4]?'✓':'✗'}] З${r[0]} ${r[1]}: ${r[2]} (верно: ${r[3]})`).join('\n')}
+`}
+function download(name,text,type){try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+text],{type:type+';charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove();toast('Файл отчёта сохраняется…')}catch(e){toast('Скачивание недоступно — используйте «Копировать»')}}
+const fname=ext=>`Отчёт_ISO9000_${(S.name||'студент').replace(/\s+/g,'_')}.${ext}`;
+
+/* ======================= КАЛЬКУЛЯТОР (без eval) ======================= */
+function calc(expr){const s=String(expr).replace(/,/g,'.').replace(/\s+/g,'').replace(/×/g,'*').replace(/÷/g,'/').replace(/[−–]/g,'-');let i=0;const pk=()=>s[i];
+ const num=()=>{const m=s.slice(i).match(/^\d+(\.\d+)?/);if(!m)throw 0;i+=m[0].length;return parseFloat(m[0])};
+ const prim=()=>{if(pk()==='('){i++;const v=add();if(s[i]!==')')throw 0;i++;return v}if(pk()==='-'){i++;return -prim()}
+  const f=s.slice(i).match(/^(exp|ln|sqrt|e)/);if(f){i+=f[1].length;if(f[1]==='e')return Math.E;if(s[i]!=='(')throw 0;i++;const v=add();if(s[i]!==')')throw 0;i++;return f[1]==='exp'?Math.exp(v):f[1]==='ln'?Math.log(v):Math.sqrt(v)}return num()};
+ const pow=()=>{let v=prim();if(pk()==='^'){i++;v=Math.pow(v,pow())}return v};
+ const mul=()=>{let v=pow();while(pk()==='*'||pk()==='/'){const o=s[i++],r=pow();v=o==='*'?v*r:v/r}return v};
+ const add=()=>{let v=mul();while(pk()==='+'||pk()==='-'){const o=s[i++],r=mul();v=o==='+'?v+r:v-r}return v};
+ const v=add();if(i<s.length||!isFinite(v))throw 0;return v}
+function openCalc(){dialog('Калькулятор',`<div class="calc"><input type="text" id="cx" placeholder="например: exp(-720/1750)" autocomplete="off"><div class="out" id="co">&nbsp;</div><div class="keys">${['(',')','^','exp(','ln(','sqrt(','×','÷','−','+'].map(k=>`<button data-a="ck" data-v="${k}">${k}</button>`).join('')}<button data-a="cc">C</button><button data-a="ceq">=</button></div><p class="small muted">Дробную часть можно писать через запятую. ^ — степень, exp(x) — e в степени x.</p></div>`,[{t:'Закрыть',cls:'o'}]);
+ const x=$('#cx');x.focus();x.addEventListener('keydown',e=>{if(e.key==='Enter')ACT.ceq()})}
+
+/* ======================= ДЕЙСТВИЯ ======================= */
+const ACT={
+ go(v){if(!S.t0&&v!=='start'){toast('Сначала зарегистрируйтесь');return}S.view=v;render();const b=$('.cb');if(b)b.scrollTop=0},
+ tab(v){const k=+v;if(S.view==='res')S.rtab=k;else S[S.view].tab=k;renderCard()},
+ start(){const n=$('#fn').value.trim(),g=$('#fg').value.trim();if(!n||!g){toast('Введите фамилию, имя и группу');return}S.name=n;S.group=g;S.t0=Date.now();S.view='t1';render();toast('Работа начата. Удачи!')},
+ full(){const el=document.documentElement;if(document.fullscreenElement){try{document.exitFullscreen()}catch(e){}return}const fail=()=>toast('Полный экран недоступен в этом окне');try{if(document.fullscreenEnabled&&el.requestFullscreen){const r=el.requestFullscreen();r&&r.catch&&r.catch(fail)}else fail()}catch(e){fail()}},
+ dlgb(v){const b=DLG[+v];closeDlg();b&&b.fn&&b.fn()},
+ dlgpick(v){const f=PICK;closeDlg();PICK=null;f&&f(+v)},
+ submit(id){const t=TASKS.find(x=>x.id===id);ask('Сдать задание?','После сдачи изменить ответы будет нельзя. Пустые ответы засчитываются как неверные.','Сдать',()=>{S[id].done=true;render();toast(`Задание сдано: ${fmt(SC(id))} из ${t.pts}`)})},
+ finish(){ask('Сдать работу?','После этого изменить ответы будет нельзя.','Сдать работу',()=>finish(false),'r')},
+ report(){REPORT=reportTXT();dialog('Отчёт',`<textarea id="rep" readonly>${esc(REPORT)}</textarea>`,[{t:'Закрыть',cls:'o'},{t:'Копировать',cls:'o',fn:copyRep},{t:'Скачать .txt',cls:'o',fn:()=>download(fname('txt'),reportTXT(),'text/plain')},{t:'Скачать .html',fn:()=>download(fname('html'),reportHTML(),'text/html')}])},
+ print(){const pa=$('#printArea');const h=reportHTML();pa.innerHTML=h.slice(h.indexOf('<h1>'),h.lastIndexOf('</body>'));const st=document.createElement('style');st.textContent='@media print{#printArea{font-family:"Times New Roman",serif;font-size:14pt}#printArea table{border-collapse:collapse;width:100%;font-size:12pt}#printArea th,#printArea td{border:1px solid #000;padding:2px 6px}}';pa.prepend(st);$$('[style]',pa).forEach(e=>{const w=(e.getAttribute('style')||'').match(/width:(\d+)%/);if(w)e.style.width=w[1]+'%'});try{window.print()}catch(e){toast('Печать недоступна — скачайте отчёт .html')}},
+ calc(){openCalc()},
+ ck(v){const x=$('#cx');x.value+=v;x.focus()},cc(){$('#cx').value='';$('#co').innerHTML='&nbsp;'},
+ ceq(){const x=$('#cx'),o=$('#co');try{const r=calc(x.value);o.textContent='= '+String(Math.round(r*1e6)/1e6).replace('.',',')}catch(e){o.textContent='Ошибка в выражении'}},
+ /* 1 */ t1go(v){S.t1.cur=+v;renderCard(true)},
+ t1ans(v){if(S.t1.done)return;S.t1.a[S.t1.cur]=+v;const nx=DEFS.findIndex((d,i)=>S.t1.a[i]==null);if(nx>=0)S.t1.cur=nx;renderCard(true)},
+ /* 2 */ t2go(v){S.t2.cur=+v;renderCard(true)},
+ t2g(v){if(S.t2.done)return;const c=S.t2.cur;S.t2.g[c]=+v;if(IND[c][2]==null||S.t2.m[c]!=null)adv2();renderCard(true)},
+ t2m(v){if(S.t2.done)return;const c=S.t2.cur;S.t2.m[c]=+v;if(S.t2.g[c]!=null)adv2();renderCard(true)},
+ /* 3 */ t3sla(v){if(S.t3.done)return;S.t3.sla=+v;renderCard(true)},
+ /* 4 */ t4c(v){if(S.t4.done)return;const [i,j]=v.split(':').map(Number);S.t4.c[i]=j;renderCard(true)},
+ /* 5 */ t5s(v){if(S.t5.done)return;const i=+v;DLG=[{t:'Отмена',cls:'o'}];PICK=j=>{S.t5.s[i]=j;renderCard(true)};const d=$('#dlg');d.innerHTML=`<div class="dbox"><h3>Назначение ${STDS[i]}</h3><div class="chips">${STDOPT.map((o,k)=>`<button class="chip${S.t5.s[i]===k?' on':''}" data-a="dlgpick" data-v="${k}">${esc(o)}</button>`).join('')}</div><div class="dbtns"><button class="btn o" data-a="dlgb" data-v="0">Отмена</button></div></div>`;d.classList.remove('hidden')},
+ t5go(v){S.t5.cur=+v;renderCard(true)},
+ t5p(v){if(S.t5.done)return;S.t5.p[S.t5.cur]=+v;const nx=SIT.findIndex((s,i)=>S.t5.p[i]==null);if(nx>=0)S.t5.cur=nx;renderCard(true)},
+ t5d(v){if(S.t5.done)return;const [i,j]=v.split(':').map(Number);S.t5.d[i]=j;renderCard(true)},
+ /* 6 */ t6go(v){S.t6.cur=+v;renderCard(true)},
+ t6f(v){if(S.t6.done)return;S.t6.f[S.t6.cur]=+v;const nx=FIND.findIndex((f,i)=>S.t6.f[i]==null);if(nx>=0)S.t6.cur=nx;renderCard(true)},
+ t6a(v){if(S.t6.done)return;const [i,j]=v.split(':').map(Number);S.t6.a[i]=j;renderCard(true)}
+};
+let REPORT='';
+function adv2(){const nx=IND.findIndex((x,i)=>S.t2.g[i]==null||(x[2]!=null&&S.t2.m[i]==null));if(nx>=0)S.t2.cur=nx}
+function copyRep(){const t=$('#rep');let ok=false;try{if(navigator.clipboard){navigator.clipboard.writeText(REPORT);ok=true}}catch(e){}if(!ok&&t){t.select();try{ok=document.execCommand('copy')}catch(e){}}toast(ok?'Отчёт скопирован':'Выделите текст и скопируйте вручную')}
+stage.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b||b.disabled)return;const f=ACT[b.dataset.a];if(f)f(b.dataset.v,b,e)});
+stage.addEventListener('input',e=>{const k=e.target.dataset.in;if(!k)return;const p=k.split('.');S[p[0]][p[1]][p[2]]=e.target.value});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#dlg').classList.contains('hidden'))closeDlg()});
+window.addEventListener('beforeunload',e=>{if(S.t0&&!S.fin){e.preventDefault();e.returnValue=''}});
+function tick(){const el=$('#clock');if(!el)return;if(!S.t0){el.textContent='90:00';return}const now=S.fin?S.tEnd:Date.now();const rem=Math.max(0,S.limit-Math.floor((now-S.t0)/1000));el.textContent=`${String(Math.floor(rem/60)).padStart(2,'0')}:${String(rem%60).padStart(2,'0')}`;el.className='pill clock'+(rem<=300?' crit':rem<=900?' warn':'');if(rem<=0&&!S.fin)finish(true)}
+setInterval(tick,500);
+function finish(byTime){if(S.fin)return;S.fin=true;S.tEnd=Date.now();S.view='res';S.rtab=0;render();dialog(byTime?'Время вышло':'Работа сдана',`<p>Результат: <b>${fmt(total())} из 100</b>. Сохраните отчёт кнопкой «Отчёт».</p>`,[{t:'К итогам'}])}
+render();
+window.APP={S,ACT,DEFS,IND,R3,Q4,QA,QB,T4Q,SIT,PDCA,FIND,ACTS,total,SC,calc,reportHTML,reportTXT,render};
+})();
+</script>
+</body>
+</html>
