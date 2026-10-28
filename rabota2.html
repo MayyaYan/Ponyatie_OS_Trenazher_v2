@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Практическая работа № 2 — Системные вызовы</title>
+<style>
+/* ===== Тренажёр «Рабочий стол»: сцена 1280×720, кегль в пунктах как в PowerPoint (не меньше 22 pt) ===== */
+:root{
+  --ink:#0F172A; --muted:#475569; --line:#CBD5E1; --soft:#F1F5F9; --win:#F8FAFC;
+  --acc:#0F766E; --acc-soft:#CCFBF1; --ind:#4338CA; --ind-soft:#E0E7FF;
+  --ok:#15803D; --ok-soft:#DCFCE7; --bad:#BE123C; --bad-soft:#FFE4E6; --warn:#B45309; --warn-soft:#FEF3C7;
+  --ff:"Segoe UI","PT Sans",Arial,sans-serif;
+  --mono:"Cascadia Mono",Consolas,"PT Mono","Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#020617}
+body{font-family:var(--ff);color:var(--ink);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:default}
+:focus-visible{outline:4px solid #F59E0B;outline-offset:2px}
+.hidden{display:none!important}
+#stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;overflow:hidden;font-size:24pt;line-height:1.25;background:#0B1220}
+
+/* рабочий стол */
+#desk{position:absolute;left:0;top:0;right:0;bottom:64px;overflow:hidden;
+  background:radial-gradient(circle at 82% 18%,rgba(45,212,191,.28),transparent 42%),radial-gradient(circle at 12% 90%,rgba(99,102,241,.30),transparent 45%),linear-gradient(135deg,#0F172A 0%,#0F3D3E 58%,#134E4A 100%)}
+#desk::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 2px,transparent 2px),linear-gradient(90deg,rgba(255,255,255,.05) 2px,transparent 2px);background-size:64px 64px}
+.dicons{position:absolute;left:20px;top:18px;display:grid;grid-template-columns:repeat(3,196px);gap:10px 8px}
+.dic{position:relative;border:2px solid transparent;background:transparent;color:#fff;text-align:center;padding:10px 6px 8px;border-radius:14px;font-size:22pt;line-height:1.12}
+.dic:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25)}
+.dic .ic{width:84px;height:84px;margin:0 auto 8px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(0,0,0,.45)}
+.dic .ic svg{width:50px;height:50px}
+.dic.locked{opacity:.45}
+.dic .mark{position:absolute;right:30px;top:4px;min-width:40px;height:40px;border-radius:20px;background:var(--ok);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;border:3px solid #fff;padding:0 6px}
+.dic .mark.lock{background:#334155}
+.dic .mark svg{width:24px;height:24px}
+.widget{position:absolute;right:20px;top:18px;width:560px;background:rgba(248,250,252,.94);border-radius:16px;padding:16px 20px;box-shadow:0 16px 40px rgba(0,0,0,.4);font-size:22pt}
+.widget h3{margin:0 0 4px;font-size:28pt}
+.widget .who{color:var(--muted);margin-bottom:8px}
+.wrow{display:grid;grid-template-columns:1fr 120px;gap:4px 12px;align-items:center;padding:4px 0;border-bottom:2px solid var(--line)}
+.wrow:last-of-type{border-bottom:0}
+.wrow .pts{text-align:right;font-weight:700}
+.bar2{grid-column:1/3;height:10px;border-radius:5px;background:#E2E8F0;overflow:hidden}
+.bar2 i{display:block;height:100%;width:0;background:var(--acc)}
+.wtotal{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;font-size:26pt;font-weight:700}
+
+/* панель задач */
+#bar{position:absolute;left:0;right:0;bottom:0;height:64px;background:rgba(2,6,23,.96);border-top:2px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:8px;padding:0 10px;color:#fff;font-size:22pt;z-index:20}
+#bar button{border:0;background:transparent;color:#fff;height:52px;padding:0 14px;border-radius:10px;display:flex;align-items:center;gap:10px;white-space:nowrap}
+#bar button:hover{background:rgba(255,255,255,.12)}
+#bar .start{background:var(--acc);font-weight:700}
+#bar .task{background:rgba(255,255,255,.12);border-bottom:4px solid #2DD4BF;max-width:520px;overflow:hidden;text-overflow:ellipsis}
+#bar .sp{flex:1}
+#bar .pill{padding:4px 14px;border-radius:10px;background:rgba(255,255,255,.1);font-weight:700}
+#bar .clock{font-family:var(--mono);background:#134E4A;color:#99F6E4}
+#bar .clock.warn{background:#B45309;color:#fff}#bar .clock.crit{background:#BE123C;color:#fff}
+#bar svg{width:30px;height:30px}
+
+/* меню «Пуск» */
+#menu{position:absolute;left:10px;bottom:72px;width:560px;background:#0F172A;color:#fff;border-radius:14px;padding:12px;z-index:30;box-shadow:0 20px 50px rgba(0,0,0,.6);font-size:22pt}
+#menu h4{margin:4px 10px 8px;font-size:22pt;color:#99F6E4}
+#menu button{display:flex;align-items:center;gap:14px;width:100%;border:0;background:transparent;color:#fff;text-align:left;padding:8px 10px;border-radius:10px}
+#menu button:hover{background:rgba(255,255,255,.1)}
+#menu .mi{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none}
+#menu .mi svg{width:28px;height:28px}
+#menu .mp{margin-left:auto;color:#94A3B8}
+
+/* окно */
+.win{position:absolute;left:8px;top:8px;width:1264px;height:640px;background:var(--win);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.6);z-index:10;animation:wopen .22s ease-out}
+@keyframes wopen{from{opacity:0;transform:scale(.97) translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.win{animation:none}}
+.wt{height:54px;flex:none;display:flex;align-items:center;gap:12px;padding-left:12px;background:#1E293B;color:#fff;font-size:22pt}
+.wt .wic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none}
+.wt .wic svg{width:26px;height:26px}
+.wt b{white-space:nowrap}
+.wt .meta{color:#94A3B8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wt .sp{flex:1}
+.wt .wb2{width:68px;height:54px;border:0;background:transparent;color:#fff;font-size:24pt}
+.wt .wb2:hover{background:rgba(255,255,255,.14)}
+.wt .wb2.x:hover{background:#BE123C}
+.wtabs{flex:none;display:flex;gap:4px;padding:8px 12px 0;background:#E2E8F0;border-bottom:2px solid var(--line);font-size:22pt}
+.wtabs button{border:0;background:transparent;padding:4px 18px 6px;border-radius:10px 10px 0 0;color:var(--muted)}
+.wtabs button.on{background:var(--win);color:var(--acc);font-weight:700;box-shadow:0 -3px 0 var(--acc) inset}
+.wbody{flex:1;min-height:0;overflow:auto;padding:12px 18px}
+.wfoot{flex:none;height:66px;display:flex;align-items:center;gap:10px;padding:0 12px;background:#E2E8F0;border-top:2px solid var(--line);font-size:22pt}
+.wfoot .st{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+
+/* общие элементы */
+p{margin:0 0 10px}
+h2{font-size:30pt;margin:0 0 10px;line-height:1.1}
+h3{font-size:26pt;margin:0 0 8px;line-height:1.15}
+.btn{border:2px solid var(--acc);background:var(--acc);color:#fff;border-radius:10px;padding:4px 18px;font-weight:700;font-size:22pt;white-space:nowrap}
+.btn:hover:not(:disabled){filter:brightness(1.12)}
+.btn.o{background:#fff;color:var(--acc)}
+.btn.r{background:var(--bad);border-color:var(--bad)}
+.btn.i{background:var(--ind);border-color:var(--ind)}
+.btn:disabled{opacity:.4}
+.lead{color:var(--muted)}
+.small{font-size:22pt}
+.box{border:2px solid var(--line);border-radius:12px;padding:10px 14px;background:#fff}
+.box.ok{background:var(--ok-soft);border-color:#86EFAC}.box.bad{background:var(--bad-soft);border-color:#FDA4AF}.box.warn{background:var(--warn-soft);border-color:#FCD34D}.box.ind{background:var(--ind-soft);border-color:#A5B4FC}
+.res{display:inline-block;padding:4px 14px;border-radius:10px;font-weight:700}
+.res.ok{background:var(--ok-soft);color:var(--ok)}.res.mid{background:var(--warn-soft);color:var(--warn)}.res.bad{background:var(--bad-soft);color:var(--bad)}
+input[type=text]{border:2px solid #94A3B8;border-radius:10px;padding:4px 12px;background:#fff;font-size:22pt;width:100%}
+input[type=text]:focus{border-color:var(--acc)}
+input.okf{border-color:var(--ok);background:var(--ok-soft)}input.badf{border-color:var(--bad);background:var(--bad-soft)}
+table.tbl{border-collapse:collapse;width:100%;font-size:22pt}
+.tbl th,.tbl td{border-bottom:2px solid var(--line);padding:4px 10px;text-align:left;vertical-align:top}
+.tbl th{background:var(--soft)}
+.opt{border:2px solid #94A3B8;background:#fff;border-radius:10px;padding:6px 14px;text-align:left;font-size:22pt;line-height:1.2}
+.opt:hover:not(:disabled){border-color:var(--acc);background:#F0FDFA}
+.opt.on{border-color:var(--acc);background:var(--acc-soft);font-weight:700}
+.opt.ok{border-color:var(--ok);background:var(--ok-soft);color:#14532D;font-weight:700}
+.opt.bad{border-color:var(--bad);background:var(--bad-soft);color:#881337;text-decoration:line-through}
+
+/* инструкция */
+.intro{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:22px;height:100%}
+.form{background:#fff;border:2px solid var(--line);border-radius:14px;padding:14px 18px;display:flex;flex-direction:column;gap:8px;font-size:22pt}
+.form label{color:var(--muted)}
+
+/* этап 1: проводник */
+.exp{display:grid;grid-template-columns:530px minmax(0,1fr);gap:16px;height:100%}
+.flist{display:flex;flex-direction:column;gap:3px;font-size:22pt}
+.frow{display:flex;align-items:center;gap:10px;border:2px solid transparent;background:#fff;border-radius:8px;padding:0 10px;height:36px;text-align:left}
+.frow:hover{border-color:#99F6E4}
+.frow.on{border-color:var(--acc);background:var(--acc-soft)}
+.frow .fic{width:20px;height:26px;border:3px solid #64748B;border-radius:3px;flex:none}
+.frow .fn{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow .tag{flex:none;padding:0 10px;border-radius:6px;background:#E2E8F0;color:var(--muted)}
+.frow .tag.set{background:var(--ind-soft);color:var(--ind);font-weight:700}
+.frow.ok{background:var(--ok-soft)}.frow.ok .tag{background:var(--ok);color:#fff}
+.frow.bad{background:var(--bad-soft)}.frow.bad .tag{background:var(--bad);color:#fff}
+.fcard{display:flex;flex-direction:column;gap:10px}
+.fcard .fname{font-family:var(--mono);font-weight:700;font-size:26pt}
+.cats{display:flex;flex-wrap:wrap;gap:8px}
+.cats .opt{white-space:nowrap}
+.cats .opt{border-left:8px solid #94A3B8}
+
+/* этап 2: код */
+.code{background:#0B111C;border-radius:12px;padding:6px 0;font-size:22pt}
+.cl{display:grid;grid-template-columns:52px minmax(0,1fr) 300px;align-items:center;width:100%;border:0;background:transparent;color:#E2E8F0;text-align:left;padding:0 12px 0 0;height:34px}
+.cl:hover:not(:disabled){background:#1E293B}
+.cl .ln{color:#64748B;text-align:right;padding-right:14px;font-family:var(--mono)}
+.cl code{font-family:var(--mono);color:#A7F3D0;white-space:pre}
+.cl .chip{justify-self:end;padding:0 12px;border-radius:6px;background:#334155;color:#CBD5E1;font-family:var(--mono);white-space:nowrap}
+.cl .chip.set{background:#3730A3;color:#fff}
+.cl.ok .chip{background:var(--ok);color:#fff}.cl.bad .chip{background:var(--bad);color:#fff}
+.cl.cur{background:#312E81}
+.mode{padding:4px 16px;border-radius:999px;font-weight:700;white-space:nowrap}
+.mode.u{background:var(--ok-soft);color:var(--ok)}.mode.k{background:var(--bad-soft);color:var(--bad)}
+.mrow{display:grid;grid-template-columns:260px 40px 300px minmax(0,1fr);align-items:center;gap:10px;padding:6px 0;border-bottom:2px solid var(--line);font-size:22pt}
+.mrow code{font-family:var(--mono);font-weight:700}
+.mcq{margin-bottom:12px}
+.mcq .q{font-weight:700;margin-bottom:6px;font-size:24pt}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* диалог */
+#dlg{position:absolute;inset:0;background:rgba(2,6,23,.62);display:flex;align-items:center;justify-content:center;z-index:60}
+.dbox{background:#fff;border-radius:16px;min-width:640px;max-width:1160px;max-height:660px;overflow:auto;padding:18px 24px;box-shadow:0 30px 70px rgba(0,0,0,.5);font-size:22pt}
+.dbox h3{margin-bottom:10px}
+.dbtns{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dgrid .opt b{font-family:var(--mono)}
+.dbox textarea{width:1080px;height:430px;font-family:var(--mono);font-size:22pt;border:2px solid var(--line);border-radius:10px;padding:8px}
+#toast{position:absolute;left:50%;top:70px;transform:translateX(-50%);background:#0F172A;color:#fff;padding:10px 22px;border-radius:12px;z-index:70;max-width:1100px;text-align:center;font-size:22pt;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+
+/* этап 3: диспетчер задач */
+.tmwrap{height:100%;overflow:auto;border:2px solid var(--line);border-radius:10px;background:#fff}
+.tmwrap.tmh{height:calc(100% - 46px)}
+.pinfo{height:40px;margin-bottom:6px;font-size:22pt;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 10px;border-radius:8px;background:var(--acc-soft)}
+table.tm{border-collapse:collapse;width:100%;font-size:22pt}
+.tm th{position:sticky;top:0;background:#E2E8F0;text-align:left;padding:4px 10px;white-space:nowrap;z-index:1}
+.tm th[data-a]{color:var(--acc);cursor:pointer}
+.tm td{padding:2px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tm tr[data-a]{cursor:pointer}
+.tm tr[data-a]:hover td{background:#F0FDFA}
+.tm tr.sel td{background:var(--acc-soft)}
+.tm tr.grp td{font-weight:700;color:var(--muted);background:var(--soft)}
+.tm .hung{color:var(--bad);font-weight:700}
+.tm .wrap{white-space:normal}
+.perf{display:grid;grid-template-columns:1fr 1fr;gap:24px;font-size:22pt}
+.perf svg{width:100%;height:96px;background:#fff;border:2px solid var(--line);border-radius:10px}
+.kv{display:grid;grid-template-columns:auto auto;gap:2px 18px;margin-top:8px}.kv span{color:var(--muted)}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:22pt;margin-bottom:12px}
+.qgrid label{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:10px;align-items:center}
+.qgrid label.wide{grid-column:1/3;grid-template-columns:minmax(0,1fr) 420px}
+#bsod{position:absolute;inset:0;background:#0B5CAD;color:#fff;z-index:90;padding:70px 90px;font-size:26pt;line-height:1.35}
+#bsod .face{font-size:96pt;line-height:1;margin-bottom:24px}
+
+/* этап 4: терминал */
+.tview{display:flex;flex-direction:column;gap:8px;height:100%}
+.chips{display:flex;gap:6px;flex-wrap:wrap;font-size:22pt}
+.chips span{padding:0 12px;border-radius:999px;background:#E2E8F0;color:var(--muted);border:2px solid transparent}
+.chips span.done{background:var(--ok-soft);color:var(--ok);border-color:#86EFAC;font-weight:700}
+.term{flex:1;min-height:0;background:#0B111C;color:#D1FAE5;font-family:var(--mono);font-size:22pt;line-height:1.3;border-radius:10px;padding:8px 14px;overflow:auto;cursor:text}
+.term pre{margin:0;white-space:pre-wrap;word-break:break-word;font:inherit}
+.term .pr{color:#86EFAC;font-weight:700}.term .er{color:#FCA5A5}.term .inf{color:#93C5FD}
+.term .il{display:flex;gap:10px}.term input{flex:1;background:none;border:0;outline:0;color:#fff;font:inherit;padding:0;min-width:0}
+.tasks{display:flex;flex-direction:column;gap:6px;font-size:22pt}
+.task{display:flex;gap:12px;align-items:center;padding:1px 12px;border-radius:10px;background:#fff;border:2px solid var(--line)}
+.task i{font-style:normal;width:34px;height:34px;border-radius:50%;border:3px solid #94A3B8;display:flex;align-items:center;justify-content:center;flex:none;font-weight:700}
+.task.done{background:var(--ok-soft);border-color:#86EFAC}.task.done i{background:var(--ok);border-color:var(--ok);color:#fff}
+.pass{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:8px 16px;align-items:center;font-size:22pt}
+
+/* этап 5: тест */
+.qnums{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.qnums button{width:62px;height:46px;border:2px solid #94A3B8;background:#fff;border-radius:10px;font-weight:700;font-size:22pt}
+.qnums button.ans{background:var(--ind-soft);border-color:var(--ind);color:var(--ind)}
+.qnums button.cur{outline:4px solid #F59E0B;outline-offset:1px}
+.qnums button.ok{background:var(--ok);border-color:var(--ok);color:#fff}.qnums button.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+.tq{font-size:28pt;font-weight:700;line-height:1.15;margin-bottom:12px}
+.topts{display:flex;flex-direction:column;gap:8px}
+.topts .opt{width:100%}
+
+/* результаты */
+.resg{display:flex;gap:26px;align-items:center;margin-bottom:12px}
+.grade{width:130px;height:130px;border-radius:26px;display:flex;align-items:center;justify-content:center;font-size:66pt;font-weight:800;color:#fff;flex:none}
+.score-big{font-size:54pt;font-weight:800;line-height:1}
+.g5{background:#15803D}.g4{background:#0F766E}.g3{background:#B45309}.g2{background:#BE123C}
+.c5{color:#15803D}.c4{color:#0F766E}.c3{color:#B45309}.c2{color:#BE123C}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="desk"><div class="dicons" id="icons"></div><div class="widget" id="widget"></div></div>
+  <div id="winHost"></div>
+  <div id="bar"></div>
+  <div id="menu" class="hidden"></div>
+  <div id="dlg" class="hidden"></div>
+  <div id="toast" class="hidden"></div>
+  <div id="bsod" class="hidden"></div>
+</div>
+<script>
+(function(){
+"use strict";
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const r1=x=>Math.round(x*10)/10;
+const pnum=v=>parseFloat(String(v??'').replace(',','.').replace(/[^\d.\-]/g,''));
+const near=(v,a,d=.05)=>!isNaN(pnum(v))&&Math.abs(pnum(v)-a)<=d;
+const clone=o=>JSON.parse(JSON.stringify(o));
+const fmt=x=>String(x).replace('.',',');
+
+/* ---------- иконки (собственная отрисовка) ---------- */
+const SV=b=>`<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${b}</svg>`;
+const IC={
+ info:SV('<circle cx="24" cy="24" r="18"/><path d="M24 21v12M24 14v1"/>'),
+ folder:SV('<path d="M5 12h14l4 5h20v23H5z"/><path d="M5 22h38"/>'),
+ code:SV('<rect x="5" y="8" width="38" height="32" rx="3"/><path d="M17 19l-5 5 5 5M31 19l5 5-5 5M26 17l-4 14"/>'),
+ chart:SV('<rect x="5" y="8" width="38" height="32" rx="3"/><path d="M10 33l8-9 6 5 8-11 6 6"/>'),
+ term:SV('<rect x="5" y="8" width="38" height="32" rx="3"/><path d="M12 19l6 5-6 5M22 31h12"/>'),
+ check:SV('<rect x="8" y="5" width="32" height="38" rx="3"/><path d="M15 25l6 6 12-13"/>'),
+ star:SV('<path d="M24 5l5.6 11.6 12.7 1.8-9.2 8.9 2.2 12.6L24 34l-11.3 5.9 2.2-12.6-9.2-8.9 12.7-1.8z"/>'),
+ grid:SV('<rect x="7" y="7" width="14" height="14" rx="2"/><rect x="27" y="7" width="14" height="14" rx="2"/><rect x="7" y="27" width="14" height="14" rx="2"/><rect x="27" y="27" width="14" height="14" rx="2"/>'),
+ full:SV('<path d="M6 17V6h11M31 6h11v11M42 31v11H31M17 42H6V31"/>'),
+ lock:SV('<rect x="10" y="21" width="28" height="21" rx="3"/><path d="M16 21v-6a8 8 0 0 1 16 0v6"/>')
+};
+
+/* ---------- этапы ---------- */
+const STG=[
+ {id:'intro',n:'Инструкция',ico:'info',c:'#475569',min:5,pts:0},
+ {id:'s2',n:'Системные вызовы',dn:'Практическая работа № 2',ico:'code',c:'#4338CA',min:15,pts:20},
+ {id:'res',n:'Результаты',ico:'star',c:'#7C3AED',min:0,pts:0}
+];
+const stg=id=>STG.find(s=>s.id===id);
+
+const S={name:'',group:'',t0:0,tEnd:0,limit:900,fin:false,open:'intro',
+ s1:{a:{},sel:0,done:false}, s2:{a:{},tab:0,done:false,play:-1}, s3:{q:{},tab:0,done:false}, s4:{q:{},tab:0,done:false}, s5:{a:{},cur:0,done:false}};
+
+/* ======================= ДАННЫЕ ЭТАПОВ ======================= */
+const CATS=[['Ядро ОС','Ядро'],['Драйвер устройства','Драйвер'],['Оболочка','Оболочка'],['Системная утилита','Утилита'],['Служба (демон)','Служба'],['Прикладная программа','Прикладная'],['Инструментальное ПО','Инструмент']];
+const COMP=[['ntoskrnl.exe','Windows: загружается при старте, работает в режиме ядра, содержит планировщик и менеджер памяти.',0],
+ ['bash','Интерпретатор команд, который запускается в окне терминала Linux.',2],
+ ['e1000e.ko','Загружаемый модуль ядра Linux для сетевого адаптера Intel.',1],
+ ['LibreOffice Writer','Текстовый процессор для подготовки документов.',5],
+ ['sshd','Работает в фоне без окна, принимает удалённые подключения по SSH.',4],
+ ['chkdsk.exe','Проверяет файловую систему тома и исправляет ошибки диска.',3],
+ ['gcc','Переводит исходный код на языке C в исполняемый файл.',6],
+ ['nvlddmkm.sys','Файл .sys в папке System32\\drivers, управляет видеокартой.',1],
+ ['explorer.exe','Рабочий стол, панель задач, меню «Пуск» и окна папок Windows.',2],
+ ['vmlinuz-6.1.0-26','Файл в каталоге /boot, который загружает загрузчик GRUB.',0],
+ ['spoolsv.exe','Фоновый процесс Windows, управляющий очередью печати.',4],
+ ['htop','Интерактивный просмотр процессов и загрузки системы в терминале.',3]];
+function sc1(){if(!S.s1.done)return 0;return r1(COMP.filter((c,i)=>S.s1.a[i]===c[2]).length*10/12)}
+
+const SYS=[['—','без системного вызова'],['openat','открыть файл'],['read','прочитать данные'],['write','записать, вывести'],['close','закрыть файл'],['mmap','получить память у ядра'],['clone','создать процесс'],['execve','запустить программу'],['clock_nanosleep','приостановить работу'],['exit_group','завершить процесс']];
+const CODE=[['int a = 6 * 7;',0],['int fd = open("data.txt", O_RDONLY);',1],['int n = read(fd, buf, 100);',2],['for (i = 0; i < n; i++) sum += buf[i];',0],['size_t len = strlen("hello");',0],['char *big = malloc(4 << 20);  // 4 МБ',5],['printf("Сумма: %d\\n", sum);',3],['pid_t pid = fork();',6],['if (pid == 0) execlp("ls", "ls", NULL);',7],['sleep(2);',8],['close(fd);',4],['return 0;  // конец main()',9]];
+const WIN=['CreateFile','ReadFile','WriteFile','VirtualAlloc','CreateProcess','ExitProcess','Sleep'];
+const WMAP=[['openat',0],['read',1],['mmap',3],['clone + execve',4],['exit_group',5]];
+const MCQ2=[['Что происходит при выполнении команды syscall?',['Программа получает прямой доступ к диску','Процессор переходит в режим ядра, управление получает ОС','Ядро копируется в память программы','Процесс сразу завершается'],1],
+ ['Почему strlen() не нужен системный вызов?',['Строка слишком короткая','strlen выполняется в BIOS','Функция работает только с памятью своего процесса','strlen реализована в драйвере'],2]];
+function sc2(){if(!S.s2.done)return 0;const a=S.s2.a;let v=CODE.filter((c,i)=>a['c'+i]===c[1]).length;v+=WMAP.filter((w,i)=>a['w'+i]===w[1]).length;MCQ2.forEach((q,i)=>{if(a['m'+i]===q[2])v+=1.5});return r1(v)}
+const s2answered=()=>Object.values(S.s2.a).filter(v=>v!==undefined).length;
+
+/* ---------- диспетчер задач ---------- */
+const PROC0=[
+ ['VideoEditor.exe','Видеоредактор — проект «Выпускной.vep»','app',12,3120,5120,'Обычный'],
+ ['chrome.exe','Браузер, 8 вкладок','app',4,1650,4120,'Обычный'],
+ ['WINWORD.EXE','Текстовый редактор — Отчёт.docx (НЕ СОХРАНЁН)','app',1,420,6044,'Обычный'],
+ ['7zFM.exe','Архиватор 7-Zip — сжатие backup.7z','app',46,210,7310,'Обычный'],
+ ['ReportBuilder.exe','Генератор отчётов','app',0,380,7788,'Обычный',{hung:1}],
+ ['Taskmgr.exe','Диспетчер задач','app',2,45,8012,'Высокий'],
+ ['CloudSyncHelper.exe','Синхронизация облачного хранилища','bg',.5,85,3020,'Обычный'],
+ ['GameLauncher.exe','Игровой лаунчер','bg',1.2,190,3330,'Обычный'],
+ ['AudioControl.exe','Панель управления звуком','bg',.1,30,2980,'Обычный'],
+ ['MsMpEng.exe','Служба защиты от вредоносных программ','bg',3,260,2410,'Обычный'],
+ ['SearchIndexer.exe','Индексатор поиска','bg',.4,70,2700,'Обычный'],
+ ['explorer.exe','Проводник — графическая оболочка','sys',1,150,4410,'Обычный'],
+ ['dwm.exe','Диспетчер окон рабочего стола','sys',1.5,110,1180,'Высокий',{restart:1}],
+ ['svchost.exe','Узел службы: DCOM, RPC','sys',.2,25,980,'Обычный',{crit:1}],
+ ['svchost.exe','Узел службы: сетевая служба','sys',.3,40,1420,'Обычный'],
+ ['lsass.exe','Подсистема локальной безопасности','sys',.1,20,820,'Обычный',{crit:1}],
+ ['services.exe','Диспетчер управления службами','sys',0,12,800,'Обычный',{crit:1}],
+ ['wininit.exe','Автозагрузка приложений Windows','sys',0,6,720,'Высокий',{crit:1}],
+ ['csrss.exe','Процесс исполнения клиент-сервер','sys',.1,5,640,'Высокий',{crit:1}],
+ ['smss.exe','Диспетчер сеансов Windows','sys',0,1,400,'Обычный',{crit:1}],
+ ['System','Ядро NT и система','sys',.3,.1,4,'—',{crit:1,noprio:1}]].map(p=>({n:p[0],d:p[1],g:p[2],cpu:p[3],base:p[3],mem:p[4],pid:p[5],pr:p[6],...(p[7]||{})}));
+const START0=[{n:'CloudSync Helper',p:'CloudSoft',imp:'Высокое',on:true},{n:'GameLauncher',p:'GameStudio',imp:'Высокое',on:true},{n:'AudioControl',p:'SoundTech',imp:'Низкое',on:true},{n:'Security Notification',p:'Учебная ОС',imp:'Среднее',on:true},{n:'Messenger',p:'ChatCorp',imp:'Не измерено',on:false}];
+const SERV0=[{n:'Spooler',d:'Диспетчер печати',st:'Остановлена',ty:'Вручную'},{n:'EventLog',d:'Журнал событий',st:'Выполняется',ty:'Автоматически',prot:1},{n:'RpcSs',d:'Удалённый вызов процедур',st:'Выполняется',ty:'Автоматически',prot:1},{n:'Dhcp',d:'DHCP-клиент',st:'Выполняется',ty:'Автоматически'},{n:'wuauserv',d:'Центр обновления',st:'Выполняется',ty:'Вручную'},{n:'BITS',d:'Фоновая передача',st:'Остановлена',ty:'Вручную'},{n:'Themes',d:'Темы оформления',st:'Выполняется',ty:'Автоматически'},{n:'WSearch',d:'Служба поиска',st:'Выполняется',ty:'Автоматически'}];
+const PRIOS=['Реального времени','Высокий','Выше среднего','Обычный','Ниже среднего','Низкий'];
+const TM={procs:clone(PROC0),start:clone(START0),serv:clone(SERV0),sel:null,ssel:null,vsel:null,sort:null,bsod:0,killedWord:false,killedHung:false,hist:Array(30).fill(30),nextPid:9100,boot:Date.now()};
+function tmSync(){const sp=TM.serv.find(s=>s.n==='Spooler');const has=TM.procs.some(p=>p.n==='spoolsv.exe');if(sp.st==='Выполняется'&&!has)TM.procs.push({n:'spoolsv.exe',d:'Диспетчер очереди печати',g:'bg',cpu:0,base:0,mem:9,pid:TM.nextPid++,pr:'Обычный'});if(sp.st!=='Выполняется'&&has)TM.procs=TM.procs.filter(p=>p.n!=='spoolsv.exe')}
+function tmReset(){TM.procs=clone(PROC0);TM.sel=null;TM.serv.forEach(s=>{if(s.ty==='Автоматически')s.st='Выполняется'});TM.boot=Date.now();tmSync()}
+const tmCPU=()=>Math.min(100,TM.procs.reduce((a,p)=>a+p.cpu,0)+3);
+const tmMem=()=>(TM.procs.reduce((a,p)=>a+p.mem,0)+2300)/1024;
+const T_ITEMS=[['Зависший ReportBuilder.exe снят',()=>TM.killedHung&&!TM.procs.some(p=>p.n==='ReportBuilder.exe')],['Приоритет 7zFM.exe: «Ниже среднего»',()=>{const p=TM.procs.find(p=>p.n==='7zFM.exe');return !!p&&p.pr==='Ниже среднего'}],['Отключена автозагрузка программ с высоким влиянием, остальное не тронуто',()=>TM.start.every((s,i)=>s.imp==='Высокое'?!s.on:s.on===START0[i].on)],['Spooler запущена, тип «Автоматически»; другие службы не изменены',()=>TM.serv.every((s,i)=>s.n==='Spooler'?(s.st==='Выполняется'&&s.ty==='Автоматически'):(s.st===SERV0[i].st&&s.ty===SERV0[i].ty))]];
+const T_Q=[['q1','Логических процессоров',12,0],['q2','Оперативная память, ГБ',16,.05],['q3','Базовая скорость ЦП, ГГц',2.5,.01]];
+const T_WHY=['Он принадлежит другому пользователю','Это критический системный процесс: система аварийно остановится','Он занимает слишком мало памяти','Это вирус'];
+const q4ok=()=>/^videoeditor(\.exe)?$/i.test(String(S.s3.q.q4||'').trim());
+function sc3(){if(!S.s3.done)return 0;let v=T_ITEMS.filter(x=>x[1]()).length*3;T_Q.forEach(q=>{if(near(S.s3.q[q[0]],q[2],q[3]))v+=1.5});if(q4ok())v+=1.5;if(S.s3.q.q5===1)v+=2;v-=TM.bsod*2+(TM.killedWord?1:0);return Math.max(0,r1(v))}
+
+/* ---------- терминал ---------- */
+const LX={cron:'inactive',sshd:'active',danger:0,obj:{},hist:[],hi:0,lines:[`<span class="inf">Debian GNU/Linux 12 · lab-srv · пользователь student (есть права sudo)
+Введите help, чтобы увидеть доступные команды.</span>`]};
+const LOBJ=[['kernel','Определите версию ядра Linux','ядро'],['cpu','Определите число логических процессоров','ЦП'],['ram','Определите объём оперативной памяти','ОЗУ'],['df','Определите заполненность корневой ФС /','диск /'],['pid1','Определите процесс с PID 1','PID 1'],['lsmod','Выведите список модулей ядра (драйверов)','модули'],['strace','Отследите системные вызовы команды ls','strace'],['cron','Запустите остановленную службу cron','cron']];
+const LHELP=`Доступные команды:
+ uname [-a|-r]   hostnamectl   nproc   lscpu   free -h   df -h
+ lsblk   uptime   whoami   id   hostname   date
+ cat ФАЙЛ  (/etc/os-release, /proc/version, /proc/cpuinfo, /proc/meminfo)
+ ps aux   ps -p PID -o comm=   pstree   top
+ lsmod   modinfo МОДУЛЬ   lspci -k   dmesg (нужен sudo)
+ strace КОМАНДА   strace -c КОМАНДА
+ systemctl status|start|stop СЛУЖБА
+ systemctl list-units --type=service
+ ls [КАТАЛОГ]   which   history   clear
+ sudo КОМАНДА — выполнить с правами администратора
+Конвейеры: … | grep [-c] [-i] ТЕКСТ,  … | wc -l,  … | head`;
+const LPROCS=[['root',1,'0.0','0.1','/sbin/init (systemd)'],['root',2,'0.0','0.0','[kthreadd]'],['root',212,'0.0','0.3','systemd-journald'],['root',245,'0.0','0.1','systemd-udevd'],['root',512,'0.0','0.1','/usr/sbin/sshd -D'],['root',530,'0.0','0.0','/sbin/agetty tty1'],['www-data',688,'0.4','0.6','nginx: worker'],['postgres',702,'0.8','1.9','postgres: 15/main'],['student',1510,'0.0','0.1','-bash'],['student',1622,'0.0','0.0','ps aux']];
+function lob(k){if(!LX.obj[k]&&!S.s4.done){LX.obj[k]=true;LX.flash=k}}
+function lxExec(a,su){const c=a[0],x=a.slice(1);
+ switch(c){
+ case 'help':return LHELP;
+ case 'uname':{const f=x.join('');if(f.includes('a')){lob('kernel');return 'Linux lab-srv 6.1.0-26-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.112-1 x86_64 GNU/Linux'}if(f.includes('r')){lob('kernel');return '6.1.0-26-amd64'}if(f.includes('m'))return 'x86_64';if(f.includes('n'))return 'lab-srv';return 'Linux'}
+ case 'hostnamectl':lob('kernel');return ' Static hostname: lab-srv\nOperating System: Debian GNU/Linux 12 (bookworm)\n          Kernel: Linux 6.1.0-26-amd64\n    Architecture: x86-64';
+ case 'nproc':lob('cpu');return '4';
+ case 'lscpu':lob('cpu');return 'Architecture:        x86_64\nCPU(s):              4\nModel name:          Intel Xeon E-2224G @ 3.50GHz\nThread(s) per core:  1\nCore(s) per socket:  4\nVirtualization:      VT-x';
+ case 'free':lob('ram');return x.includes('-h')||x.includes('-m')?'        total   used   free  avail\nMem:    7,8Gi  2,1Gi  3,9Gi  5,4Gi\nSwap:   975Mi     0B  975Mi':'        total    used    free   avail\nMem:  8167780 2201544 4089120 5694512\nSwap:  998396       0  998396';
+ case 'df':lob('df');return x.includes('-h')?'Filesystem  Size  Used Avail Use% Mounted on\n/dev/sda2    40G   23G   15G  62% /\n/dev/sda1   511M  5,9M  506M   2% /boot/efi\n/dev/sdb1   916G  402G  468G  47% /srv/data':'Filesystem 1K-blocks     Used Use% Mounted on\n/dev/sda2   41022688 23961520  62% /\n/dev/sda1     523248     6040   2% /boot/efi\n/dev/sdb1  960379920 421541200 47% /srv/data';
+ case 'lsblk':return 'NAME   SIZE TYPE MOUNTPOINTS\nsda     41G disk\n├─sda1 512M part /boot/efi\n└─sda2  40G part /\nsdb    931G disk\n└─sdb1 931G part /srv/data';
+ case 'uptime':return ' 11:42:07 up 12 days,  3:05,  1 user,  load average: 0,21, 0,17';
+ case 'whoami':return su?'root':'student';
+ case 'id':return su?'uid=0(root) gid=0(root)':'uid=1000(student) gid=1000(student) группы=1000(student),27(sudo)';
+ case 'hostname':return 'lab-srv';
+ case 'date':return 'Вт 27 окт 2026 11:42:07 MSK';
+ case 'echo':return x.join(' ').replace('$SHELL','/bin/bash').replace('$USER','student').replace('$HOME','/home/student');
+ case 'which':return x[0]?'/usr/bin/'+x[0]:'';
+ case 'cat':{const p=x[0];if(!p)return 'cat: укажите файл';
+  if(p==='/etc/os-release')return 'PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"\nNAME="Debian GNU/Linux"\nVERSION_ID="12"\nVERSION_CODENAME=bookworm\nID=debian';
+  if(p==='/proc/version'){lob('kernel');return 'Linux version 6.1.0-26-amd64 (gcc-12 12.2.0) #1 SMP PREEMPT_DYNAMIC Debian 6.1.112-1'}
+  if(p==='/proc/cpuinfo'){lob('cpu');return [0,1,2,3].map(i=>`processor\t: ${i}\nmodel name\t: Intel Xeon E-2224G @ 3.50GHz`).join('\n')}
+  if(p==='/proc/meminfo'){lob('ram');return 'MemTotal:     8167780 kB\nMemFree:      4089120 kB\nMemAvailable: 5694512 kB'}
+  if(p==='/etc/shadow')return su?'(содержимое скрыто в тренажёре)':'cat: /etc/shadow: Отказано в доступе';
+  return `cat: ${p}: Нет такого файла или каталога`}
+ case 'ps':{if(x.includes('-p')){const id=x[x.indexOf('-p')+1];const P=LPROCS.find(p=>String(p[1])===id);if(!P)return '    PID TTY      TIME CMD';const nm=id==='1'?'systemd':P[4].split(' ')[0].split('/').pop().replace(':','');if(id==='1')lob('pid1');if(x.includes('-o'))return nm;return `    PID TTY      TIME CMD\n${String(P[1]).padStart(7)} ?    00:00:02 ${nm}`}
+  if(x.some(v=>/^(aux|-ef|-e|-aux|ax)$/.test(v))){lob('pid1');return 'USER       PID %CPU %MEM COMMAND\n'+LPROCS.map(p=>`${p[0].padEnd(9)}${String(p[1]).padStart(5)} ${p[2].padStart(4)} ${p[3].padStart(4)} ${p[4]}`).join('\n')}
+  return '    PID TTY      TIME CMD\n   1510 pts/0 00:00:00 bash\n   1622 pts/0 00:00:00 ps'}
+ case 'pstree':lob('pid1');return 'systemd(1)─┬─agetty(530)\n           ├─nginx(687)───nginx(688)\n           ├─postgres(702)\n           ├─sshd(512)───sshd(1490)───bash(1510)\n           ├─systemd-journal(212)\n           └─systemd-udevd(245)';
+ case 'top':lob('pid1');return 'top - 11:42:07 up 12 days, 1 user, load average: 0,21\nTasks: 112 total,   1 running, 111 sleeping\n%Cpu(s):  1,8 us,  0,6 sy, 97,4 id\n\n    PID USER      %CPU %MEM COMMAND\n    702 postgres   0,8  1,9 postgres\n    688 www-data   0,4  0,6 nginx\n      1 root       0,0  0,1 systemd\n    512 root       0,0  0,1 sshd';
+ case 'lsmod':lob('lsmod');return 'Module             Size  Used by\ne1000e           315392  0\nptp               36864  1 e1000e\nsnd_hda_intel     57344  0\ni915            3092480  2\nnvme              57344  0\next4            1007616  2\nxhci_pci          24576  0\nusb_storage       81920  0\nkvm_intel        380928  0';
+ case 'modinfo':{const m=x[0];const D={e1000e:'Intel(R) PRO/1000 Network Driver',ext4:'Fourth Extended Filesystem',snd_hda_intel:'Intel HDA driver',i915:'Intel Graphics',nvme:'NVM Express device driver',usb_storage:'USB Mass Storage driver',kvm_intel:'KVM support for Intel VT-x',xhci_pci:'xHCI PCI Host Controller Driver'};if(!m)return 'modinfo: укажите модуль';if(!D[m])return `modinfo: ERROR: Module ${m} not found.`;return `filename:    /lib/modules/6.1.0-26-amd64/…/${m}.ko\nlicense:     GPL\ndescription: ${D[m]}`}
+ case 'lspci':return x.includes('-k')?'00:02.0 VGA controller: Intel UHD Graphics P630\n\tKernel driver in use: i915\n00:1f.3 Audio device: Intel Cannon Lake PCH cAVS\n\tKernel driver in use: snd_hda_intel\n00:1f.6 Ethernet controller: Intel I219-LM\n\tKernel driver in use: e1000e\n01:00.0 NVMe controller: Samsung NVMe SSD\n\tKernel driver in use: nvme':'00:02.0 VGA controller: Intel UHD Graphics P630\n00:1f.3 Audio device: Intel Cannon Lake PCH cAVS\n00:1f.6 Ethernet controller: Intel I219-LM\n01:00.0 NVMe controller: Samsung NVMe SSD';
+ case 'dmesg':return su?'[ 0.000000] Linux version 6.1.0-26-amd64 …\n[ 2.004117] e1000e: Intel(R) PRO/1000 Network Driver\n[ 2.231950] e1000e 0000:00:1f.6 eth0: registered\n[ 3.118420] EXT4-fs (sda2): mounted filesystem\n[ 5.402215] e1000e eth0: NIC Link is Up 1000 Mbps':'dmesg: read kernel buffer failed: Operation not permitted';
+ case 'strace':{if(!x.length)return 'strace: must have PROG [ARGS]';const cnt=x[0]==='-c';const prog=cnt?x[1]:x[0];if(!prog)return 'strace: must have PROG [ARGS]';if(prog==='ls')lob('strace');
+  if(cnt)return 'notes.txt  report.pdf\n% time  calls syscall\n 22,41     23 mmap\n 14,31      9 openat\n 10,03     11 close\n  7,52      7 read\n  5,90      2 getdents64\n  4,13      1 write\n  3,24      1 execve\n  1,18      1 exit_group\n100,00     72 total';
+  return `execve("/usr/bin/${prog}", ["${prog}"], …) = 0\nmmap(NULL, 8192, …) = 0x7f2b1c3f1000\nopenat(AT_FDCWD, "/lib/…/libc.so.6", O_RDONLY) = 3\nread(3, "\\177ELF…", 832) = 832\nclose(3) = 0\nopenat(AT_FDCWD, ".", O_RDONLY|O_DIRECTORY) = 3\ngetdents64(3, /* 4 entries */, 32768) = 112\nclose(3) = 0\nwrite(1, "notes.txt  report.pdf\\n", 22) = 22\nexit_group(0) = ?\n+++ exited with 0 +++`}
+ case 'systemctl':{const sub=x[0],sv=(x[1]||'').replace('.service','');
+  if(sub==='list-units')return 'UNIT                 ACTIVE   SUB\ncron.service         '+(LX.cron==='active'?'active   running':'inactive dead')+'\nnginx.service        active   running\npostgresql.service   active   exited\nssh.service          '+(LX.sshd==='active'?'active   running':'inactive dead')+'\nsystemd-journald     active   running';
+  if(!['status','start','stop','restart','enable','disable','is-active'].includes(sub))return 'systemctl: неизвестная команда. Пример: systemctl status cron';
+  const key=sv==='cron'?'cron':(sv==='ssh'||sv==='sshd')?'sshd':null;if(!sv)return 'Укажите службу, например: systemctl status cron';
+  if(!key&&!['nginx','postgresql','systemd-journald'].includes(sv))return `Unit ${sv}.service could not be found.`;
+  if(sub==='status'||sub==='is-active'){const st=key?LX[key]:'active';if(sub==='is-active')return st;return `● ${sv}.service\n   Loaded: loaded (/lib/systemd/system/${sv}.service)\n   Active: ${st==='active'?'active (running) since Tue 11:40:12 MSK':'inactive (dead)'}`}
+  if(!su)return `Failed to ${sub} ${sv}.service: Access denied\n(управлять службами может только администратор — используйте sudo)`;
+  if(sub==='start'||sub==='restart'){if(key){LX[key]='active';if(key==='cron')lob('cron')}return ''}
+  if(sub==='stop'){if(key){LX[key]='inactive';if(key==='sshd'){LX.danger++;return 'ВНИМАНИЕ: служба SSH остановлена — администраторы потеряли удалённый доступ!'}}else LX.danger++;return ''}
+  return ''}
+ case 'kill':{if(x.includes('1')){LX.danger++;return 'Тренажёр: команда заблокирована. Завершение PID 1 вызывает kernel panic.'}return su?'':'bash: kill: операция не позволена'}
+ case 'rm':if(x.includes('/')||x.includes('/*')){LX.danger++;return 'Тренажёр: команда заблокирована — она уничтожила бы ОС!'}return 'rm: в тренажёре удаление файлов отключено';
+ case 'reboot':case 'shutdown':case 'poweroff':return 'Тренажёр: сервер используется другими, перезагрузка отменена.';
+ case 'ls':{const p=(x.find(v=>!v.startsWith('-'))||'~').replace(/\/$/,'')||'/';const D={'~':'notes.txt  report.pdf','/home/student':'notes.txt  report.pdf','/':'bin boot dev etc home lib proc root run srv sys tmp usr var','/boot':'efi  grub  initrd.img-6.1.0-26-amd64  vmlinuz-6.1.0-26-amd64','/proc':'1  2  212  512  cpuinfo  meminfo  modules  version  …','/dev':'null  nvme0  sda  sda1  sda2  sdb  tty  zero  …','/etc':'fstab  hostname  hosts  os-release  passwd  shadow  ssh  …'};return D[p]??`ls: невозможно получить доступ к '${p}': Нет такого файла или каталога`}
+ case 'history':return LX.hist.map((h,i)=>`${String(i+1).padStart(4)}  ${h}`).join('\n');
+ case 'sudo':return 'sudo: используйте sudo один раз';
+ default:return `bash: ${c}: команда не найдена`}}
+function lxRun(raw){const line=raw.trim();LX.lines.push(`<span class="pr">student@lab-srv:~$</span> ${esc(line)}`);if(!line)return;LX.hist.push(line);LX.hi=LX.hist.length;
+ if(line==='clear'){LX.lines=[];return}
+ const parts=line.split('|').map(s=>s.trim());let a=parts[0].split(/\s+/),su=false;
+ if(a[0]==='sudo'){su=true;a.shift();if(!a.length){LX.lines.push('usage: sudo КОМАНДА');return}if(['su','-i','-s'].includes(a[0])){LX.lines.push('<span class="er">В тренажёре вход под root запрещён — пишите sudo перед командой.</span>');return}}
+ let out;
+ if(a[0]==='grep'&&parts.length===1){const fl=a.filter(v=>v.startsWith('-'));const rest=a.slice(1).filter(v=>!v.startsWith('-'));const file=rest[rest.length-1];const pat=rest.slice(0,-1).join(' ').replace(/^['"]|['"]$/g,'');const src=lxExec(['cat',file],su);const ls=src.split('\n').filter(l=>l.includes(pat));out=fl.some(f=>f.includes('c'))?String(ls.length):ls.join('\n')}
+ else out=lxExec(a,su);
+ for(const pp of parts.slice(1)){const b=pp.split(/\s+/);if(b[0]==='grep'){const fl=b.filter(v=>v.startsWith('-'));const pat=b.filter(v=>!v.startsWith('-')).slice(1).join(' ').replace(/^['"]|['"]$/g,'');const ci=fl.some(f=>f.includes('i'));const ls=String(out??'').split('\n').filter(l=>ci?l.toLowerCase().includes(pat.toLowerCase()):l.includes(pat));out=fl.some(f=>f.includes('c'))?String(ls.length):ls.join('\n')}
+  else if(b[0]==='wc'&&b[1]==='-l')out=String(String(out??'').split('\n').filter(l=>l!=='').length);
+  else if(b[0]==='head'){const n=b[1]==='-n'?+b[2]:10;out=String(out??'').split('\n').slice(0,n).join('\n')}
+  else out=`${b[0]}: в конвейере поддерживаются grep, wc -l, head`}
+ if(out)LX.lines.push(/не найдена|Отказано|не позволена|Access denied|not found|failed|ERROR|заблокирована|ВНИМАНИЕ|Нет такого/.test(out)?`<span class="er">${esc(out)}</span>`:esc(out))}
+const L_Q=[['q1','Версия ядра (как выводит uname -r)',v=>String(v||'').includes('6.1.0-26')],['q2','Логических процессоров',v=>near(v,4,0)],['q3','Объём ОЗУ, ГиБ (до десятых)',v=>near(v,7.8,.25)],['q4','Заполненность корневой ФС «/», %',v=>near(v,62,.5)],['q5','Имя процесса с PID 1',v=>/^systemd$/i.test(String(v||'').trim())],['q6','Модуль ядра — драйвер Ethernet',v=>/^e1000e$/i.test(String(v||'').trim())]];
+const lClean=()=>LX.danger===0&&LX.sshd==='active';
+function sc4(){if(!S.s4.done)return 0;let v=LOBJ.filter(o=>LX.obj[o[0]]).length*1.5;L_Q.forEach(q=>{if(q[2](S.s4.q[q[0]]))v+=2});if(lClean())v+=1;return r1(v)}
+
+/* ---------- тест ---------- */
+const TEST=[
+ ['Операционная система — это…',['прикладная программа для работы с файлами','комплекс программ, который управляет ресурсами компьютера и даёт интерфейс пользователю','микропрограмма системной платы','драйвер процессора'],1,'ОС — основа системного ПО.'],
+ ['Какой подход описывает ОС как «расширенную машину»?',['ОС распределяет ресурсы между программами','ОС скрывает сложность оборудования за удобными понятиями','ОС ускоряет процессор','ОС обновляет BIOS'],1,'Второй подход — ОС как менеджер ресурсов.'],
+ ['Процессор разделяется между программами…',['в пространстве','во времени','по пользователям','по файлам'],1,'Процессор работает по очереди, квантами времени.'],
+ ['В каком режиме процессора работает ядро ОС?',['в пользовательском (кольцо 3)','в режиме ядра (кольцо 0)','в реальном режиме','в режиме гипервизора'],1,'Ядру доступны все команды и вся память.'],
+ ['Что такое системный вызов?',['вызов функции из другой программы','обращение программы к ядру ОС за услугой','перезагрузка системы','прерывание от клавиатуры'],1,'Выполняется командой syscall с переходом в режим ядра.'],
+ ['Деление на ноль в программе вызывает…',['прерывание от таймера','исключение','системный вызов','загрузку драйвера'],1,'Исключение вызывает сама выполняемая команда.'],
+ ['Какой компонент выбирает, какой поток получит процессор?',['загрузчик','планировщик','драйвер','оболочка'],1,'Планировщик — часть ядра.'],
+ ['Что происходит при обращении к странице, выгруженной на диск?',['программа завершается','ОС подгружает страницу с диска','компьютер перезагружается','ничего'],1,'Так работает виртуальная память.'],
+ ['DMA позволяет…',['ускорить процессор','передавать данные в память без участия процессора','увеличить объём ОЗУ','шифровать диск'],1,'Об окончании передачи устройство сообщает прерыванием.'],
+ ['Какое ядро у Windows 10 и 11?',['монолитное','микроядро','гибридное','экзоядро'],2,'Ядро NT — гибридное.'],
+ ['Пример ОС с микроядром:',['Linux','Windows 11','QNX','MS-DOS'],2,'Также MINIX 3.'],
+ ['В каком году создана ОС UNIX?',['1956','1969','1981','1991'],1,'Bell Labs, К. Томпсон и Д. Ритчи.'],
+ ['Какой процесс в современных Linux имеет PID 1?',['bash','sshd','systemd','kthreadd'],2,'systemd запускает все службы.'],
+ ['Какая утилита Linux показывает системные вызовы программы?',['top','strace','lsmod','df'],1,'В Windows похожий инструмент — Process Monitor.'],
+ ['Чем контейнер отличается от виртуальной машины?',['у контейнера своё ядро','контейнер использует ядро основной ОС','контейнер работает только в Windows','ничем'],1,'Поэтому контейнеры легче и запускаются быстрее.']];
+function sc5(){if(!S.s5.done)return 0;return r1(TEST.filter((q,i)=>S.s5.a[i]===q[2]).length*25/15)}
+
+/* ======================= БАЛЛЫ ======================= */
+const SC={s1:sc1,s2:sc2,s3:sc3,s4:sc4,s5:sc5};
+const DONE={s1:()=>S.s1.done,s2:()=>S.s2.done,s3:()=>S.s3.done,s4:()=>S.s4.done,s5:()=>S.s5.done};
+const total=()=>r1(sc2());
+function grade(t){return t>=85?[5,'отлично']:t>=70?[4,'хорошо']:t>=50?[3,'удовлетворительно']:[2,'неудовлетворительно']}
+const resCls=(v,m)=>v>=m*.8?'ok':v>=m*.5?'mid':'bad';
+
+/* ======================= СЦЕНА ======================= */
+const stage=$('#stage');
+function fit(){const s=Math.min(window.innerWidth/1280,window.innerHeight/720);const x=(window.innerWidth-1280*s)/2,y=(window.innerHeight-720*s)/2;stage.style.transform=`translate(${x}px,${y}px) scale(${s})`}
+window.addEventListener('resize',fit);fit();
+function applyW(root){$$('[data-w]',root).forEach(e=>{e.style.width=e.dataset.w+'%'})}
+let toastT;function toast(t){const d=$('#toast');d.textContent=t;d.classList.remove('hidden');clearTimeout(toastT);toastT=setTimeout(()=>d.classList.add('hidden'),3500)}
+
+/* диалоги вместо alert/confirm (работают и в защищённом плеере) */
+let DLG=[];
+function dialog(title,html,buttons){DLG=buttons||[{t:'OK'}];const d=$('#dlg');d.innerHTML=`<div class="dbox"><h3>${esc(title)}</h3><div>${html}</div><div class="dbtns">${DLG.map((b,k)=>`<button class="btn ${b.cls||''}" data-a="dlgb" data-v="${k}">${esc(b.t)}</button>`).join('')}</div></div>`;d.classList.remove('hidden');const f=d.querySelector('input,textarea');if(f)f.focus()}
+function closeDlg(){$('#dlg').classList.add('hidden');$('#dlg').innerHTML=''}
+const ask=(title,text,yes,fn,cls)=>dialog(title,`<p>${text}</p>`,[{t:'Отмена',cls:'o'},{t:yes,cls:cls||'',fn}]);
+function pick(title,opts,cur,fn,html){DLG=[{t:'Отмена',cls:'o'}];const d=$('#dlg');d.innerHTML=`<div class="dbox"><h3>${esc(title)}</h3><div class="dgrid">${opts.map((o,k)=>`<button class="opt${k===cur?' on':''}" data-a="dlgpick" data-v="${k}">${html?o:esc(o)}</button>`).join('')}</div><div class="dbtns"><button class="btn o" data-a="dlgb" data-v="0">Отмена</button></div></div>`;d.classList.remove('hidden');PICK=fn}
+let PICK=null;
+
+/* ======================= РАБОЧИЙ СТОЛ ======================= */
+const unlocked=id=>id==='intro'||!!S.t0;
+function renderDesk(){
+ $('#icons').innerHTML=STG.map(s=>{const d=DONE[s.id]&&DONE[s.id]();const lk=!unlocked(s.id);
+  return `<button class="dic${lk?' locked':''}" data-a="open" data-v="${s.id}" title="${esc(s.n)}"><div class="ic" data-bg="${s.c}">${IC[s.ico]}</div>${esc(s.dn||s.n)}${d?'<span class="mark">✓</span>':lk?`<span class="mark lock">${IC.lock}</span>`:''}</button>`}).join('');
+ $$('#icons [data-bg]').forEach(e=>{e.style.background=e.dataset.bg;e.style.color='#fff'});
+ const rows=STG.filter(s=>s.pts).map(s=>{const v=SC[s.id]();return `<div class="wrow"><span>${esc(s.dn)}</span><span class="pts">${DONE[s.id]()?fmt(v):'—'} / ${s.pts}</span><div class="bar2"><i data-w="${DONE[s.id]()?v/s.pts*100:0}"></i></div></div>`}).join('');
+ $('#widget').innerHTML=`<h3>Работа № 2 — Системные вызовы</h3><div class="who">${S.name?`${esc(S.name)} · ${esc(S.group)}`:'Практическая работа № 2 · 15 минут'}</div>${rows}<div class="wtotal"><span>Итого</span><span>${fmt(total())} / 20</span></div>`;
+ applyW($('#widget'));
+}
+function renderBar(){const s=S.open?stg(S.open):null;
+ $('#bar').innerHTML=`<button class="start" data-a="menu">${IC.grid} Этапы</button>${s?`<button class="task" data-a="focus">${esc(s.dn||s.n)}</button>`:''}<span class="sp"></span><span class="pill">${fmt(total())} / 20</span><span class="pill clock" id="clock">15:00</span><button data-a="full" title="Полный экран">${IC.full}</button>`;tick()}
+function renderMenu(){$('#menu').innerHTML=`<h4>Этапы работы</h4>${STG.map(s=>`<button data-a="open" data-v="${s.id}"><span class="mi" data-bg="${s.c}">${IC[s.ico]}</span>${esc(s.dn||s.n)}<span class="mp">${s.pts?(DONE[s.id]()?fmt(SC[s.id]())+' / '+s.pts:s.pts+' б.'):''}</span></button>`).join('')}`;$$('#menu [data-bg]').forEach(e=>{e.style.background=e.dataset.bg;e.style.color='#fff'})}
+
+/* ======================= ОКНА ======================= */
+const VIEW={};
+function render(){renderDesk();renderBar();renderWin()}
+function renderWin(keepScroll){const host=$('#winHost');if(!S.open){host.innerHTML='';return}
+ const s=stg(S.open),V=VIEW[S.open];const sc=keepScroll&&$('.wbody')?$('.wbody').scrollTop:0;
+ const tabs=V.tabs?V.tabs():null;const foot=V.foot();
+ host.innerHTML=`<div class="win"><div class="wt"><span class="wic" data-bg="${s.c}">${IC[s.ico]}</span><b>${esc(s.n)}</b><span class="meta">${s.pts?`· работа № 2 · ${s.min} мин · ${s.pts} баллов${DONE[s.id]()?' · сдан: '+fmt(SC[s.id]()):''}`:''}</span><span class="sp"></span><button class="wb2" data-a="min" title="Свернуть">—</button><button class="wb2 x" data-a="min" title="Закрыть">✕</button></div>
+ ${tabs?`<div class="wtabs">${tabs.map((t,k)=>`<button class="${k===V.tab()?'on':''}" data-a="tab" data-v="${k}">${esc(t)}</button>`).join('')}</div>`:''}
+ <div class="wbody">${V.body()}</div><div class="wfoot"><span class="st" id="wst">${foot[0]}</span>${foot[1]}</div></div>`;
+ $$('.wic[data-bg]',host).forEach(e=>{e.style.background=e.dataset.bg});applyW(host);
+ if(sc)$('.wbody').scrollTop=sc;
+ V.bind&&V.bind();
+ if(S.fin&&S.open!=='res')$$('.wbody button,.wbody input,.wfoot button:not(.keep)',host).forEach(b=>b.disabled=true);
+}
+const nextBtn=id=>{const i=STG.findIndex(s=>s.id===id);const n=STG[i+1];return n?`<button class="btn o keep" data-a="open" data-v="${n.id}">Далее: ${esc(n.dn||n.n)} →</button>`:''};
+const submitBtn=id=>`<button class="btn" data-a="submit" data-v="${id}">Проверить работу</button>`;
+
+/* ---------- инструкция ---------- */
+VIEW.intro={body:()=>`<div class="intro"><div>
+ <p><b>Цель:</b> Изучить, как программы обращаются к ядру через системные вызовы, и сопоставить их с возможностями Windows.</p>
+ <table class="tbl"><tr><th>Этап</th><th>Время</th><th>Баллы</th></tr>${STG.filter(s=>s.pts).map(s=>`<tr><td>${esc(s.dn)}</td><td>${s.min} мин</td><td>${s.pts}</td></tr>`).join('')}</table>
+ <p class="small lead">Работа сдаётся один раз. Через 15 минут результаты автоматически фиксируются.</p></div>
+ <div class="form">${S.t0?`<h3>Работа начата</h3><p>Студент: <b>${esc(S.name)}</b><br>Группа: <b>${esc(S.group)}</b></p><button class="btn keep" data-a="open" data-v="s2">Открыть работу →</button>`:
+ `<h3>Регистрация</h3><label>Фамилия и имя</label><input type="text" id="fn" autocomplete="off"><label>Группа</label><input type="text" id="fg" autocomplete="off"><button class="btn" data-a="start">▶ Начать работу</button><span class="lead">Таймер: 15 минут</span>`}</div></div>`,
+ foot:()=>['Оценка: ≥85% — «5», ≥70% — «4», ≥50% — «3»',''],
+ bind:()=>{const g=$('#fg');if(g)g.onkeydown=e=>{if(e.key==='Enter')ACT.start()}}};
+
+/* ---------- этап 1 ---------- */
+VIEW.s1={body:()=>{const a=S.s1.a,sel=S.s1.sel,c=COMP[sel],d=S.s1.done;
+ const rows=COMP.map((f,i)=>{const v=a[i];const st=d?(v===f[2]?' ok':' bad'):'';return `<button class="frow${i===sel?' on':''}${st}" data-a="s1sel" data-v="${i}"><span class="fic"></span><span class="fn">${esc(f[0])}</span><span class="tag${v!=null?' set':''}">${v!=null?CATS[v][1]:'?'}</span></button>`}).join('');
+ const verdict=d?`<div class="box ${a[sel]===c[2]?'ok':'bad'}"><b>${a[sel]===c[2]?'Верно.':'Неверно.'}</b> Правильно: «${CATS[c[2]][0]}».</div>`:'';
+ return `<div class="exp"><div class="flist">${rows}</div><div class="fcard"><div class="fname">${esc(c[0])}</div><p>${esc(c[1])}</p>${verdict}<b>Отнесите к категории:</b><div class="cats">${CATS.map((k,j)=>`<button class="opt${a[sel]===j?' on':''}${d&&j===c[2]?' ok':''}${d&&a[sel]===j&&j!==c[2]?' bad':''}" data-a="s1cat" data-v="${j}">${esc(k[0])}</button>`).join('')}</div></div></div>`},
+ foot:()=>{const n=Object.keys(S.s1.a).length;return [S.s1.done?`<span class="res ${resCls(sc1(),10)}">Этап 1: ${fmt(sc1())} / 10</span>`:`Распределено файлов: ${n} из 12`,(S.s1.done?'':submitBtn('s1'))+nextBtn('s1')]}};
+
+/* ---------- этап 2 ---------- */
+VIEW.s2={tabs:()=>['Код программы','Linux ↔ Windows','Вопросы'],tab:()=>S.s2.tab,
+ body:()=>{const a=S.s2.a,d=S.s2.done;
+  if(S.s2.tab===0)return `<div class="code">${CODE.map((c,i)=>{const v=a['c'+i];const st=d?(v===c[1]?' ok':' bad'):'';return `<button class="cl${st}${S.s2.play===i?' cur':''}" data-a="s2line" data-v="${i}"><span class="ln">${i+1}</span><code>${esc(c[0])}</code><span class="chip${v!=null?' set':''}">${v!=null?esc(SYS[v][0]):'?'}${d&&v!==c[1]?' → '+esc(SYS[c[1]][0]):''}</span></button>`}).join('')}</div>`;
+  if(S.s2.tab===1)return `<p class="lead small">Какая функция Windows API выполняет ту же работу, что и системный вызов Linux?</p>${WMAP.map((w,i)=>{const v=a['w'+i];return `<div class="mrow"><code>${esc(w[0])}</code><span>→</span><button class="btn ${v!=null?'i':'o'}" data-a="s2win" data-v="${i}">${v!=null?esc(WIN[v]):'выбрать…'}</button><span>${d?(v===w[1]?'<span class="res ok">верно</span>':`<span class="res bad">верно: ${esc(WIN[w[1]])}</span>`):''}</span></div>`}).join('')}`;
+  return MCQ2.map((q,i)=>`<div class="mcq"><div class="q">${i+1}. ${esc(q[0])}</div><div class="grid2">${q[1].map((o,j)=>{const on=a['m'+i]===j;const st=d?(j===q[2]?' ok':on?' bad':''):(on?' on':'');return `<button class="opt${st}" data-a="s2mcq" data-v="${i}:${j}">${esc(o)}</button>`}).join('')}</div></div>`).join('')},
+ foot:()=>{const d=S.s2.done;if(!d)return [`${S.s2.tab===0?'Нажмите на строку кода (Linux, glibc). ':''}Отвечено: ${s2answered()} из 19`,submitBtn('s2')+nextBtn('s2')];
+  const p=S.s2.play;const k=p>=0&&p<CODE.length?CODE[p][1]:null;
+  const mode=p<0?'<span class="mode u">Нажмите ▶, чтобы выполнить программу</span>':p>=CODE.length?'<span class="mode u">Процесс завершён</span>':k?`<span class="mode k">Режим ядра · ${esc(SYS[k][0])}</span>`:'<span class="mode u">Режим пользователя</span>';
+  return [`<span class="res ${resCls(sc2(),20)}">${fmt(sc2())} / 20</span> ${mode}`,`<button class="btn i keep" data-a="s2play">▶ Выполнить</button>`+nextBtn('s2')]}};
+
+/* ---------- этап 3 ---------- */
+const TMTABS=['Процессы','Производительность','Автозагрузка','Службы','Вопросы'];
+VIEW.s3={tabs:()=>TMTABS,tab:()=>S.s3.tab,
+ body:()=>{const t=S.s3.tab,d=S.s3.done;
+  if(t===0){let L=TM.procs.slice();if(TM.sort)L.sort((a,b)=>b[TM.sort]-a[TM.sort]);
+   const row=p=>{const i=TM.procs.indexOf(p);return `<tr class="${TM.sel===i?'sel':''}" data-a="tmsel" data-v="${i}"><td><b>${esc(p.n)}</b></td><td class="${p.hung?'hung':''}">${p.hung?'Не отвечает':'Работает'}</td><td>${p.pid}</td><td data-cpu="${p.pid}">${fmt(p.cpu.toFixed(1))}%</td><td>${p.mem>=1?Math.round(p.mem).toLocaleString('ru-RU'):'0,1'} МБ</td><td>${esc(p.pr)}</td></tr>`};
+   const groups=[['app','Приложения'],['bg','Фоновые процессы'],['sys','Процессы Windows']];
+   const P=TM.procs[TM.sel];
+   return `<div class="pinfo">${P?`<b>${esc(P.n)}</b> — ${esc(P.d)}`:'Выберите процесс. Нажмите «ЦП» или «Память», чтобы отсортировать.'}</div><div class="tmwrap tmh"><table class="tm"><tr><th>Имя</th><th>Состояние</th><th>PID</th><th data-a="tmsort" data-v="cpu">ЦП ${TM.sort==='cpu'?'▼':''}</th><th data-a="tmsort" data-v="mem">Память ${TM.sort==='mem'?'▼':''}</th><th>Приоритет</th></tr>${TM.sort?L.map(row).join(''):groups.map(([g,n])=>`<tr class="grp"><td colspan="6">${n} (${L.filter(p=>p.g===g).length})</td></tr>`+L.filter(p=>p.g===g).map(row).join('')).join('')}</table></div>`}
+  if(t===1){const up=Math.floor((Date.now()-TM.boot)/1000)+(TM.bsod?5:2*86400+5*3600+41*60);const dd=Math.floor(up/86400),h=Math.floor(up%86400/3600),m=Math.floor(up%3600/60);
+   return `<div class="perf"><div><h3>ЦП · Intel Core i5-12400</h3><svg viewBox="0 0 580 120" aria-hidden="true"><polyline points="${TM.hist.map((v,i)=>`${i*20},${118-v*1.15}`).join(' ')}" fill="none" stroke="#0F766E" stroke-width="4"/></svg>
+   <div class="kv"><span>Использование</span><b id="tmcpu">${Math.round(tmCPU())}%</b><span>Базовая скорость</span><b>2,50 ГГц</b><span>Ядра</span><b>6</b><span>Логических процессоров</span><b>12</b><span>Процессы</span><b>${TM.procs.length+121}</b><span>Время работы</span><b>${dd} дн. ${h} ч ${m} мин</b></div></div>
+   <div><h3>Память</h3><div class="kv"><span>Всего</span><b>16,0 ГБ</b><span>Используется</span><b>${fmt(tmMem().toFixed(1))} ГБ</b><span>Скорость</span><b>3200 МГц</b><span>Гнёзд занято</span><b>2 из 4</b></div><h3 data-x="1">Диск 0 (C:)</h3><div class="kv"><span>Тип</span><b>SSD NVMe</b><span>Ёмкость</span><b>512 ГБ</b></div></div></div>`}
+  if(t===2)return `<div class="tmwrap"><table class="tm"><tr><th>Имя</th><th>Издатель</th><th>Состояние</th><th>Влияние на запуск</th></tr>${TM.start.map((s,i)=>`<tr class="${TM.ssel===i?'sel':''}" data-a="stsel" data-v="${i}"><td><b>${esc(s.n)}</b></td><td>${esc(s.p)}</td><td>${s.on?'Включено':'Отключено'}</td><td>${s.imp}</td></tr>`).join('')}</table></div>`;
+  if(t===3)return `<div class="tmwrap"><table class="tm"><tr><th>Имя</th><th>Описание</th><th>Состояние</th><th>Тип запуска</th></tr>${TM.serv.map((s,i)=>`<tr class="${TM.vsel===i?'sel':''}" data-a="svsel" data-v="${i}"><td><b>${esc(s.n)}</b></td><td>${esc(s.d)}</td><td>${s.st}</td><td>${s.ty}</td></tr>`).join('')}</table></div>`;
+  const q=S.s3.q;const inp=(k,ok)=>`<input type="text" data-in="s3.${k}" value="${esc(q[k]??'')}" class="${d?(ok?'okf':'badf'):''}">`;
+  return `<div class="qgrid">${T_Q.map(x=>`<label>${esc(x[1])}${inp(x[0],near(q[x[0]],x[2],x[3]))}</label>`).join('')}<label class="wide">Имя процесса, который занимает больше всего памяти<input type="text" data-in="s3.q4" value="${esc(q.q4??'')}" class="${d?(q4ok()?'okf':'badf'):''}"></label></div>
+   <div class="mcq"><div class="q">Почему диспетчер задач предупреждает при попытке снять csrss.exe?</div><div class="grid2">${T_WHY.map((o,j)=>{const on=q.q5===j;const st=d?(j===1?' ok':on?' bad':''):(on?' on':'');return `<button class="opt${st}" data-a="s3why" data-v="${j}">${esc(o)}</button>`}).join('')}</div></div>
+   `},
+ foot:()=>{const t=S.s3.tab,d=S.s3.done;let st='',b='';
+  if(t===0){st=`ЦП ${Math.round(tmCPU())}% · память ${Math.round(tmMem()/16*100)}%`;b='<button class="btn o" data-a="tmnew">Новая задача</button><button class="btn o" data-a="tmprio">Приоритет ▾</button><button class="btn r" data-a="tmkill">Снять задачу</button>'}
+  else if(t===2){st='Выберите программу автозагрузки';b='<button class="btn o" data-a="ston">Включить</button><button class="btn r" data-a="stoff">Отключить</button>'}
+  else if(t===3){const s=TM.serv[TM.vsel];st=s?`Служба ${esc(s.n)}: ${s.st.toLowerCase()}`:'Выберите службу';b='<button class="btn o" data-a="svstart">Запустить</button><button class="btn r" data-a="svstop">Остановить</button><button class="btn o" data-a="svtype">Тип запуска ▾</button>'}
+  else if(t===1)st=`ЦП ${Math.round(tmCPU())}% · память ${Math.round(tmMem()/16*100)}%`;
+  else st=d?`<span class="res ${resCls(sc3(),20)}">Этап 3: ${fmt(sc3())} / 20</span>`:'Ответьте на вопросы по данным диспетчера задач';
+  if(d){b=t===4?nextBtn('s3'):'';if(t!==4)st=`<span class="res ${resCls(sc3(),20)}">Этап 3: ${fmt(sc3())} / 20</span> Подробности — на вкладке «Вопросы»`}else b+=submitBtn('s3');
+  return [st,b]}};
+
+/* ---------- этап 4 ---------- */
+VIEW.s4={tabs:()=>['Терминал','Задания ('+LOBJ.filter(o=>LX.obj[o[0]]).length+'/8)','Паспорт системы'],tab:()=>S.s4.tab,
+ body:()=>{const t=S.s4.tab,d=S.s4.done;
+  if(t===0)return `<div class="tview"><div class="chips">${LOBJ.map((o,i)=>`<span class="${LX.obj[o[0]]?'done':''}">${i+1} ${esc(o[2])}</span>`).join('')}</div><div class="term" id="term"><pre id="tout"></pre><div class="il"><span class="pr">student@lab-srv:~$</span><input id="tin" autocomplete="off" spellcheck="false" autocapitalize="off"></div></div></div>`;
+  if(t===1)return `<div class="tasks">${LOBJ.map((o,i)=>`<div class="task${LX.obj[o[0]]?' done':''}"><i>${LX.obj[o[0]]?'✓':i+1}</i>${esc(o[1])}</div>`).join('')}</div><p class="small lead">Подсказка: начните с help; службами управляют через sudo.</p>`;
+  return `<p class="lead small">Запишите результаты исследования сервера lab-srv.</p><div class="pass">${L_Q.map(q=>`<span>${esc(q[1])}</span><input type="text" data-in="s4.${q[0]}" value="${esc(S.s4.q[q[0]]??'')}" class="${d?(q[2](S.s4.q[q[0]])?'okf':'badf'):''}">`).join('')}</div>${d?`<div class="box ${lClean()?'ok':'warn'} small" data-x="1">Ответы: 6.1.0-26-amd64; 4; 7,8; 62; systemd; e1000e. ${lClean()?'Работа безопасна: +1.':'Были опасные действия — балл за безопасность не начислен.'}</div>`:''}`},
+ foot:()=>[S.s4.done?`<span class="res ${resCls(sc4(),25)}">Этап 4: ${fmt(sc4())} / 25</span>`:`Выполнено заданий: ${LOBJ.filter(o=>LX.obj[o[0]]).length} из 8. ↑/↓ — история команд.`,(S.s4.done?'':submitBtn('s4'))+nextBtn('s4')],
+ bind:()=>{const inp=$('#tin');if(!inp)return;const out=$('#tout'),term=$('#term');
+  const draw=()=>{out.innerHTML=LX.lines.join('\n')+(LX.lines.length?'\n':'');term.scrollTop=term.scrollHeight};draw();
+  term.addEventListener('click',()=>inp.focus());
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'){lxRun(inp.value);inp.value='';const fl=LX.flash;LX.flash=null;if(fl){renderWin();renderDesk();renderBar();const i2=$('#tin');i2&&i2.focus();toast('Задание выполнено: '+LOBJ.find(o=>o[0]===fl)[1])}else{draw();$('#wst').textContent=`Выполнено заданий: ${LOBJ.filter(o=>LX.obj[o[0]]).length} из 8. ↑/↓ — история команд.`}}
+   else if(e.key==='ArrowUp'){if(LX.hi>0){LX.hi--;inp.value=LX.hist[LX.hi]}e.preventDefault()}else if(e.key==='ArrowDown'){if(LX.hi<LX.hist.length){LX.hi++;inp.value=LX.hist[LX.hi]||''}e.preventDefault()}});
+  if(S.s4.done)inp.disabled=true;else setTimeout(()=>inp.focus({preventScroll:true}),30)}};
+
+/* ---------- этап 5 ---------- */
+VIEW.s5={body:()=>{const c=S.s5.cur,q=TEST[c],a=S.s5.a,d=S.s5.done;
+ return `<div class="qnums">${TEST.map((x,i)=>`<button class="${i===c?'cur ':''}${d?(a[i]===x[2]?'ok':'bad'):(a[i]!=null?'ans':'')}" data-a="s5go" data-v="${i}">${i+1}</button>`).join('')}</div>
+ <div class="tq">${c+1}. ${esc(q[0])}</div><div class="topts">${q[1].map((o,j)=>{const on=a[c]===j;const st=d?(j===q[2]?' ok':on?' bad':''):(on?' on':'');return `<button class="opt${st}" data-a="s5ans" data-v="${j}">${String.fromCharCode(1040+j)}) ${esc(o)}</button>`}).join('')}</div>${d?`<div class="box ${a[c]===q[2]?'ok':'bad'} small" data-x="1">${a[c]===q[2]?'Верно.':'Неверно.'} ${esc(q[3])}</div>`:''}`},
+ foot:()=>{const n=Object.keys(S.s5.a).length;return [S.s5.done?`<span class="res ${resCls(sc5(),25)}">Тест: ${fmt(sc5())} / 25</span>`:`Отвечено: ${n} из 15`,`<button class="btn o keep" data-a="s5go" data-v="${S.s5.cur-1}"${S.s5.cur===0?' disabled':''}>← Назад</button><button class="btn o keep" data-a="s5go" data-v="${S.s5.cur+1}"${S.s5.cur===14?' disabled':''}>Далее →</button>`+(S.s5.done?nextBtn('s5'):submitBtn('s5'))]}};
+
+/* ---------- результаты ---------- */
+function used(){if(!S.t0)return '0 мин';const e=Math.min(S.limit,Math.floor(((S.fin?S.tEnd:Date.now())-S.t0)/1000));return `${Math.floor(e/60)} мин ${e%60} с`}
+function details(){return {s1:S.s1.done?`верно ${COMP.filter((c,i)=>S.s1.a[i]===c[2]).length} из 12`:'не сдан',s2:S.s2.done?`код ${CODE.filter((c,i)=>S.s2.a['c'+i]===c[1]).length}/12, WinAPI ${WMAP.filter((w,i)=>S.s2.a['w'+i]===w[1]).length}/5`:'не сдан',s3:S.s3.done?`действий ${T_ITEMS.filter(x=>x[1]()).length}/4, сбоев ${TM.bsod}`:'не сдан',s4:S.s4.done?`заданий ${LOBJ.filter(o=>LX.obj[o[0]]).length}/8, ответов ${L_Q.filter(q=>q[2](S.s4.q[q[0]])).length}/6`:'не сдан',s5:S.s5.done?`верных ${TEST.filter((q,i)=>S.s5.a[i]===q[2]).length} из 15`:'не сдан'}}
+VIEW.res={body:()=>{const T=total(),[g,gt]=grade(T*100/20),D=details();
+ return `<div class="resg"><div class="grade g${g}">${g}</div><div><div class="score-big">${fmt(T)} <span class="lead">/ 20</span></div><div>Оценка: <b class="c${g}">${g} (${gt})</b></div><div class="lead small">${S.name?esc(S.name)+' · '+esc(S.group)+' · ':''}время: ${used()}${S.fin?' · работа сдана':''}</div></div></div>
+ <table class="tbl"><tr><th>Этап</th><th>Детали</th><th>Баллы</th></tr>${STG.filter(s=>s.pts).map(s=>`<tr><td><b>${esc(s.dn)}</b></td><td>${D[s.id]}</td><td><b>${fmt(SC[s.id]())}</b> / ${s.pts}</td></tr>`).join('')}</table>`},
+ foot:()=>[S.fin?'Работа сдана. Покажите результат преподавателю.':'Несданные этапы оцениваются в 0 баллов.',(S.fin?'':'<button class="btn r keep" data-a="finish">Сдать работу</button>')+'<button class="btn keep" data-a="report">Отчёт</button><button class="btn o keep" data-a="print">Печать</button>']};
+
+/* ======================= ДЕЙСТВИЯ ======================= */
+const ACT={
+ open(v){if(!unlocked(v)){toast('Сначала зарегистрируйтесь в окне «Инструкция»');return}$('#menu').classList.add('hidden');S.open=v;render();const b=$('.wbody');if(b)b.scrollTop=0},
+ min(){S.open=null;render()},
+ focus(){},
+ menu(){const m=$('#menu');if(m.classList.contains('hidden')){renderMenu();m.classList.remove('hidden')}else m.classList.add('hidden')},
+ full(){const el=document.documentElement;if(document.fullscreenElement){try{document.exitFullscreen()}catch(e){}return}const fail=()=>toast('В этом окне полный экран недоступен — разверните окно плеера');try{if(document.fullscreenEnabled&&el.requestFullscreen){const r=el.requestFullscreen();r&&r.catch&&r.catch(fail)}else fail()}catch(e){fail()}},
+ tab(v){const k=+v;if(S.open==='s2')S.s2.tab=k;if(S.open==='s3')S.s3.tab=k;if(S.open==='s4')S.s4.tab=k;renderWin()},
+ start(){const n=$('#fn').value.trim(),g=$('#fg').value.trim();if(!n||!g){toast('Введите фамилию, имя и группу');return}S.name=n;S.group=g;S.t0=Date.now();render();toast('Работа начата. Удачи!')},
+ dlgb(v){const b=DLG[+v];closeDlg();b&&b.fn&&b.fn()},
+ dlgpick(v){const f=PICK;closeDlg();PICK=null;f&&f(+v)},
+ submit(id){const msg={s1:()=>{const m=12-Object.keys(S.s1.a).length;return m?`Не распределено файлов: ${m}. `:''},s2:()=>{const m=19-s2answered();return m?`Без ответа: ${m}. `:''},s3:()=>'Будет оценено текущее состояние системы и ответы. ',s4:()=>'',s5:()=>{const m=15-Object.keys(S.s5.a).length;return m?`Без ответа: ${m}. `:''}}[id]();
+  ask('Проверить работу?',`${msg}После сдачи изменить ответы будет нельзя.`,'Сдать',()=>{S[id].done=true;if(id==='s2')S.s2.play=-1;render();if(id==='s3')dialog(`Этап 3 сдан: ${fmt(sc3())} из 20`,`<p>${T_ITEMS.map(x=>`${x[1]()?'✅':'❌'} ${esc(x[0])}`).join('<br>')}${TM.bsod?`<br>⚠️ Аварийных остановок системы: ${TM.bsod} (−${TM.bsod*2})`:''}${TM.killedWord?'<br>⚠️ Закрыт Word с несохранённым отчётом (−1)':''}<br>Ответы: 12 процессоров; 16 ГБ; 2,5 ГГц; VideoEditor.exe; csrss.exe — критический процесс.</p>`);else toast(`Этап сдан: ${fmt(SC[id]())} из ${stg(id).pts}`)})},
+ finish(){ask('Сдать работу?','После этого изменить ответы будет нельзя.','Сдать работу',()=>finish(false),'r')},
+ print(){try{window.print()}catch(e){toast('Печать недоступна в этом окне — используйте «Отчёт»')}},
+ report(){const T=total(),[g,gt]=grade(T*100/20),D=details();const txt=`ОТЧЁТ ПО ПРАКТИЧЕСКОЙ РАБОТЕ № 2
+Тема: Системные вызовы
+Студент: ${S.name||'—'}
+Группа: ${S.group||'—'}
+Дата: ${new Date().toLocaleString('ru-RU')}
+Время работы: ${used()} из 15 мин
+Статус: ${S.fin?'работа сдана':'промежуточный отчёт'}
+
+Задание: ${D.s2}
+Результат: ${fmt(T)} / 20 баллов
+Оценка: ${g} (${gt})
+`;REPORT=txt;dialog('Отчёт',`<textarea id="rep" readonly>${esc(txt)}</textarea>`,[{t:'Закрыть',cls:'o'},{t:'Копировать',fn:copyRep,cls:'o'},{t:'Скачать .txt',fn:dlRep}])},
+ /* этап 1 */
+ s1sel(v){S.s1.sel=+v;renderWin(true)},
+ s1cat(v){if(S.s1.done)return;S.s1.a[S.s1.sel]=+v;const nx=COMP.findIndex((c,i)=>S.s1.a[i]==null);if(nx>=0)S.s1.sel=nx;renderWin(true)},
+ /* этап 2 */
+ s2line(v){if(S.s2.done)return;const i=+v;pick(`Строка ${i+1}: ${CODE[i][0]}`,SYS.map(s=>`<b>${esc(s[0])}</b> — ${esc(s[1])}`),S.s2.a['c'+i],j=>{S.s2.a['c'+i]=j;renderWin(true)},true)},
+ s2win(v){if(S.s2.done)return;const i=+v;pick(`Аналог ${WMAP[i][0]} в Windows`,WIN,S.s2.a['w'+i],j=>{S.s2.a['w'+i]=j;renderWin(true)})},
+ s2mcq(v){if(S.s2.done)return;const [i,j]=v.split(':').map(Number);S.s2.a['m'+i]=j;renderWin(true)},
+ s2play(){if(PLAY)return;S.s2.tab=0;S.s2.play=0;renderWin();PLAY=setInterval(()=>{S.s2.play++;if(S.s2.play>CODE.length){clearInterval(PLAY);PLAY=null}if(S.open==='s2'&&S.s2.tab===0)renderWin(true)},1300)},
+ /* этап 3 */
+ tmsel(v){TM.sel=+v;renderWin(true)},tmsort(v){TM.sort=TM.sort===v?null:v;renderWin()},
+ stsel(v){TM.ssel=+v;renderWin(true)},svsel(v){TM.vsel=+v;renderWin(true)},
+ s3why(v){if(S.s3.done)return;S.s3.q.q5=+v;renderWin(true)},
+ tmnew(){if(S.s3.done)return;dialog('Создание задачи','<p>Введите имя программы:</p><input type="text" id="newt">',[{t:'Отмена',cls:'o'},{t:'OK',fn:()=>{}}]);const inp=$('#newt');const go=()=>{const v=inp.value.trim().toLowerCase();closeDlg();if(v==='explorer.exe'||v==='explorer'){if(!TM.procs.some(p=>p.n==='explorer.exe'))TM.procs.push({n:'explorer.exe',d:'Проводник — графическая оболочка',g:'sys',cpu:1,base:1,mem:150,pid:TM.nextPid++,pr:'Обычный'})}else if(v==='notepad.exe'||v==='notepad'){TM.procs.push({n:'notepad.exe',d:'Блокнот',g:'app',cpu:0,base:0,mem:14,pid:TM.nextPid++,pr:'Обычный'})}else if(v)dialog('Ошибка',`<p>Не удаётся найти «${esc(v)}».</p>`);renderWin(true)};DLG[1].fn=null;DLG[1].fn=()=>{};inp.addEventListener('keydown',e=>{if(e.key==='Enter')go()});$('#dlg [data-v="1"]').setAttribute('data-a','dlgnew');NEWT=go},
+ dlgnew(){NEWT&&NEWT()},
+ tmkill(){if(S.s3.done)return;const P=TM.procs[TM.sel];if(!P){toast('Выберите процесс в таблице');return}
+  if(P.crit){ask('Диспетчер задач',`Завершить системный процесс «${esc(P.n)}»?<br>Это приведёт к неработоспособности системы, несохранённые данные будут потеряны.`,'Завершить',()=>bsod(P.n),'r');return}
+  const kill=()=>{TM.procs.splice(TM.procs.indexOf(P),1);if(P.n==='ReportBuilder.exe')TM.killedHung=true;if(P.n==='WINWORD.EXE')TM.killedWord=true;TM.sel=null;if(P.restart)setTimeout(()=>{TM.procs.push({...P,pid:TM.nextPid++});if(S.open==='s3')renderWin(true)},1200);renderWin(true)};
+  kill()},
+ tmprio(){if(S.s3.done)return;const P=TM.procs[TM.sel];if(!P){toast('Выберите процесс в таблице');return}if(P.noprio){dialog('Диспетчер задач','<p>Отказано в доступе. Нельзя изменить приоритет этого процесса.</p>');return}
+  pick('Приоритет: '+P.n,PRIOS,PRIOS.indexOf(P.pr),i=>{if(i===0)ask('Диспетчер задач','Приоритет реального времени может нарушить работу системы. Изменить?','Изменить',()=>{P.pr=PRIOS[0];renderWin(true)});else{P.pr=PRIOS[i];renderWin(true)}})},
+ ston(){const s=TM.start[TM.ssel];if(S.s3.done)return;if(!s){toast('Выберите программу');return}s.on=true;renderWin(true)},
+ stoff(){const s=TM.start[TM.ssel];if(S.s3.done)return;if(!s){toast('Выберите программу');return}s.on=false;renderWin(true)},
+ svstart(){svAct(true)},svstop(){svAct(false)},
+ svtype(){if(S.s3.done)return;const s=TM.serv[TM.vsel];if(!s){toast('Выберите службу');return}if(s.prot){dialog('Службы','<p>Тип запуска этой системной службы изменять нельзя.</p>');return}const o=['Автоматически','Вручную','Отключена'];pick('Тип запуска: '+s.n,o,o.indexOf(s.ty),i=>{s.ty=o[i];if(s.ty==='Отключена'){s.st='Остановлена';tmSync()}renderWin(true)})},
+ /* этап 5 */
+ s5go(v){const i=+v;if(i<0||i>14)return;S.s5.cur=i;renderWin()},
+ s5ans(v){if(S.s5.done)return;S.s5.a[S.s5.cur]=+v;renderWin(true);if(S.s5.cur<14)setTimeout(()=>{if(S.s5.a[S.s5.cur]===+v&&!S.s5.done){S.s5.cur++;renderWin()}},450)}
+};
+let PLAY=null,NEWT=null,REPORT='';
+function svAct(start){if(S.s3.done)return;const s=TM.serv[TM.vsel];if(!s){toast('Выберите службу');return}
+ if(!start&&s.prot){dialog('Службы',`<p>Службу ${esc(s.n)} невозможно остановить: от неё зависят компоненты ОС.</p>`);return}
+ if(start&&s.ty==='Отключена'){dialog('Службы','<p>Служба отключена. Сначала измените тип запуска.</p>');return}
+ s.st=start?'Выполняется':'Остановлена';tmSync();renderWin(true)}
+function bsod(n){TM.bsod++;const b=$('#bsod');let p=0;const draw=()=>{b.innerHTML=`<div class="face">:(</div><p>На вашем ПК возникла проблема, и его необходимо перезагрузить.</p><p>Сбор сведений об ошибке: ${p}%</p><p>Код остановки: <b>CRITICAL_PROCESS_DIED</b></p><p>Сбойный процесс: ${esc(n)}</p>`};draw();b.classList.remove('hidden');
+ const iv=setInterval(()=>{p+=10;draw();if(p>=100){clearInterval(iv);b.classList.add('hidden');tmReset();render();toast('Система перезагружена. Все изменения в диспетчере задач потеряны (−2 балла).')}},280)}
+function copyRep(){const t=$('#rep');let ok=false;try{if(navigator.clipboard){navigator.clipboard.writeText(REPORT);ok=true}}catch(e){}if(!ok&&t){t.select();try{ok=document.execCommand('copy')}catch(e){}}toast(ok?'Отчёт скопирован':'Выделите текст отчёта и скопируйте вручную')}
+function dlRep(){try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+REPORT],{type:'text/plain;charset=utf-8'}));a.download=`Отчёт_Работа_2_${(S.name||'студент').replace(/\s+/g,'_')}.txt`;document.body.appendChild(a);a.click();a.remove();toast('Файл отчёта сохраняется…')}catch(e){toast('Скачивание недоступно — используйте «Копировать»')}}
+
+stage.addEventListener('click',e=>{const b=e.target.closest('[data-a]');
+ if(!e.target.closest('#menu')&&!e.target.closest('[data-a="menu"]'))$('#menu').classList.add('hidden');
+ if(!b||b.disabled)return;const f=ACT[b.dataset.a];if(f)f(b.dataset.v,b,e)});
+stage.addEventListener('input',e=>{const k=e.target.dataset.in;if(!k)return;const [st,q]=k.split('.');S[st].q[q]=e.target.value});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#dlg').classList.contains('hidden'))closeDlg();else $('#menu').classList.add('hidden')}});
+window.addEventListener('beforeunload',e=>{if(S.t0&&!S.fin){e.preventDefault();e.returnValue=''}});
+
+/* таймер и «живой» диспетчер задач */
+function tick(){const el=$('#clock');if(!el)return;if(!S.t0){el.textContent='15:00';return}const now=S.fin?S.tEnd:Date.now();const rem=Math.max(0,S.limit-Math.floor((now-S.t0)/1000));el.textContent=`${String(Math.floor(rem/60)).padStart(2,'0')}:${String(rem%60).padStart(2,'0')}`;el.className='pill clock'+(rem<=300?' crit':rem<=900?' warn':'');if(rem<=0&&!S.fin)finish(true)}
+setInterval(tick,500);
+setInterval(()=>{TM.procs.forEach(p=>{if(!p.hung)p.cpu=Math.max(0,r1(p.base*(.75+Math.random()*.5)))});TM.hist.push(Math.round(tmCPU()));TM.hist.shift();
+ if(S.open==='s3'&&$('#dlg').classList.contains('hidden')){if(S.s3.tab===0)TM.procs.forEach(p=>{const c=$(`[data-cpu="${p.pid}"]`);if(c)c.textContent=fmt(p.cpu.toFixed(1))+'%'});else if(S.s3.tab===1)renderWin()}},1500);
+function finish(byTime){if(S.fin)return;S.fin=true;S.tEnd=Date.now();S.open='res';render();dialog(byTime?'Время вышло':'Работа сдана',`<p>Ответы зафиксированы. Результат: <b>${fmt(total())} из 20</b>.</p>`,[{t:'Посмотреть результаты'}])}
+
+render();
+window.SIM={S,ACT,TM,LX,COMP,CODE,WMAP,MCQ2,TEST,L_Q,LOBJ,T_ITEMS,sc1,sc2,sc3,sc4,sc5,total,render};
+})();
+</script>
+</body>
+</html>
